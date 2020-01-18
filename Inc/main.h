@@ -64,27 +64,18 @@ void Error_Handler(void);
 #define MotA_CurrentSense_GPIO_Port GPIOA
 #define MotB_CurrentSense_Pin GPIO_PIN_1
 #define MotB_CurrentSense_GPIO_Port GPIOA
-#define EncB_Pin GPIO_PIN_4
-#define EncB_GPIO_Port GPIOA
-#define EncB_EXTI_IRQn EXTI4_IRQn
 #define MotA_Dir_Pin GPIO_PIN_5
 #define MotA_Dir_GPIO_Port GPIOA
 #define MotB_Dir_Pin GPIO_PIN_6
 #define MotB_Dir_GPIO_Port GPIOA
-#define MotB_PWM_Pin GPIO_PIN_7
-#define MotB_PWM_GPIO_Port GPIOA
-#define EncA_Pin GPIO_PIN_0
-#define EncA_GPIO_Port GPIOB
-#define EncA_EXTI_IRQn EXTI0_IRQn
 #define MotA_Brake_Pin GPIO_PIN_7
 #define MotA_Brake_GPIO_Port GPIOC
-#define MotB_Brake_Pin GPIO_PIN_9
+#define MotB_Brake_Pin GPIO_PIN_10
 #define MotB_Brake_GPIO_Port GPIOA
 #define MotA_PWM_Pin GPIO_PIN_3
 #define MotA_PWM_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-int EncValD;
-int stateEncD;
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

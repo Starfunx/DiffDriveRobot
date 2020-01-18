@@ -29,7 +29,7 @@ void motor_unbreake(motor_Context *motor){
     HAL_GPIO_WritePin(motor->motBrake_Port, motor->motBrake_Pin, GPIO_PIN_RESET);
 }
 
-static void setPWM(TIM_HandleTypeDef timer, uint32_t channel, uint16_t period, uint16_t pulse) {
+void setPWM(TIM_HandleTypeDef timer, uint32_t channel, uint16_t period, uint16_t pulse) {
 	  HAL_TIM_PWM_Stop(&timer, channel);    // stop generation of pwm
 	  TIM_OC_InitTypeDef sConfigOC;   timer.Init.Period = period;           // set the period duration
 	  HAL_TIM_PWM_Init(&timer);  // reinititialise with new period value

@@ -20,6 +20,5 @@ void motor_setSpeed(motor_Context* motor, int speed);
 void motor_breake(motor_Context *motor);
 void motor_unbreake(motor_Context *motor);
 
-static void setPWM(TIM_HandleTypeDef, uint32_t, uint16_t, uint16_t);
 
 #endif

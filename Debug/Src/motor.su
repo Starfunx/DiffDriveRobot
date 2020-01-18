@@ -2,4 +2,4 @@ motor.c:3:6:motor_init	96	static
 motor.c:9:6:motor_setSpeed	96	static
 motor.c:24:6:motor_breake	16	static
 motor.c:28:6:motor_unbreake	16	static
-motor.c:32:13:setPWM	40	static
+motor.c:32:6:setPWM	40	static

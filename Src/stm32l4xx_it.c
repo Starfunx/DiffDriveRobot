@@ -52,28 +52,11 @@
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void updateEncG(void) {
-    uint8_t s = stateEncD & 3;
-    if (HAL_GPIO_ReadPin(EncA_GPIO_Port, EncA_Pin)) s |= 4;
-    if (HAL_GPIO_ReadPin(EncB_GPIO_Port, EncB_Pin)) s |= 8;
-    switch (s) {
-        case 0: case 5: case 10: case 15:
-            break;
-        case 1: case 7: case 8: case 14:
-        	EncValD++; break;
-        case 2: case 4: case 11: case 13:
-        	EncValD--; break;
-        case 3: case 12:
-        	EncValD += 2; break;
-        default:
-        	EncValD -= 2; break;
-    }
-    stateEncD = (s >> 2);
-}
+
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-
+extern TIM_HandleTypeDef htim4;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -215,35 +198,17 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles EXTI line0 interrupt.
+  * @brief This function handles TIM4 global interrupt.
   */
-void EXTI0_IRQHandler(void)
+void TIM4_IRQHandler(void)
 {
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
-	if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_0)){
-		updateEncG();
-	}
-  /* USER CODE END EXTI0_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
+  /* USER CODE BEGIN TIM4_IRQn 0 */
 
-  /* USER CODE END EXTI0_IRQn 1 */
-}
+  /* USER CODE END TIM4_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim4);
+  /* USER CODE BEGIN TIM4_IRQn 1 */
 
-/**
-  * @brief This function handles EXTI line4 interrupt.
-  */
-void EXTI4_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI4_IRQn 0 */
-	if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_4)){
-		updateEncG();
-	}
-  /* USER CODE END EXTI4_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
-  /* USER CODE BEGIN EXTI4_IRQn 1 */
-
-  /* USER CODE END EXTI4_IRQn 1 */
+  /* USER CODE END TIM4_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

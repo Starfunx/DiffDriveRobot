@@ -11,9 +11,13 @@ void motionControl_init(motionControl_context *motionController){
     motionController->maxAngularVelocity = 0;
 }
 
-void motionControl_update(motionControl_context* motionController, _position robotPos){
+void motionControl_update(motionControl_context* motionController, _position robotPos,
+                                          float* linearVelocity, float* angularVelocity){
     float alpha = atan2(motionController->consign.y - robotPos.y,motionController->consign.x - robotPos.x) - robotPos.theta;
     float rho  = sqrt(pow(motionController->consign.x - robotPos.x,2) + pow(motionController->consign.y - robotPos.y,2));
+
+    *LinearVelocity = motionController->Krho * rho;
+    *angularVelocity = motionController->Kalpha * np.sin(alpha)*np.cos(alpha);
 
 }
 

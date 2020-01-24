@@ -18,6 +18,10 @@ void motor_setSpeed(motor_Context *motor, int speed){
         HAL_GPIO_WritePin(motor->motDir_Port, motor->motDir_Pin, GPIO_PIN_RESET);
     }
 
+    if (speed > motor->maxPWM){
+        speed = motor->maxPWM;
+    }
+
     setPWM(motor->timer, motor->channel, 255, speed); // set PWM
 }
 

@@ -27,6 +27,8 @@
 #include <stdio.h>
 #include "motor.h"
 #include "odometry.h"
+#include "pid.h"
+#include "differentialDrive.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -88,7 +90,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-  
+
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -124,7 +126,8 @@ int main(void)
 	motorG.motDir_Pin	 	= MotA_Dir_Pin;
 	motorG.motBrake_Port	= MotA_Brake_GPIO_Port;
 	motorG.motBrake_Pin	= MotA_Brake_Pin;
-	motorG.reverseDir	 	= true;
+	motorG.reverseDir	 	= false;
+	motorG.maxPWM = 255;
 
 	motorD.timer	 		= htim3;
 	motorD.channel	 	= TIM_CHANNEL_2;
@@ -132,7 +135,8 @@ int main(void)
 	motorD.motDir_Pin	 	= MotB_Dir_Pin;
 	motorD.motBrake_Port	= MotB_Brake_GPIO_Port;
 	motorD.motBrake_Pin	= MotB_Brake_Pin;
-	motorD.reverseDir	 	= false;
+	motorD.reverseDir	 	= true;
+	motorD.maxPWM = 255;
 
 	motor_init(&motorG);
 	motor_init(&motorD);
@@ -141,8 +145,8 @@ int main(void)
 	odometry.rightTicks = (int*)&TIM4->CNT;
 	odometry.leftTicks = (int*)&TIM1->CNT;
 	odometry.encoderRes = 				480; // tick/rad
-	odometry.wheelRadiusR = 			65./2.;
-	odometry.wheelRadiusL = 			65./2.;
+	odometry.wheelRadiusR = 			64.8/2.;
+	odometry.wheelRadiusL = 			64.8/2.;
 	odometry.distanceBetweenWheels = 	210.;
 
 	odometry_init(&odometry);
@@ -150,19 +154,80 @@ int main(void)
 	odometry.position.x = 0.;
 	odometry.position.y = 0.;
 	odometry.position.theta = 0.;
+
+	pid_Context pidD, pidG;
+	pid_init(&pidD);
+	pidD.Kp			= 0.192;
+	pidD.Ti			= 0.0625;
+	pidD.Td			= 0.015625;
+	pidD.minOut		= -255;
+	pidD.maxOut		= 255;
+
+	pid_init(&pidG);
+	pidG.Kp			= 0.190;
+	pidG.Ti			= 0.0625;
+	pidG.Td			= 0.015625;
+	pidG.minOut		= -255;
+	pidG.maxOut		= 255;
+
+	float distanceBetweenMotorWheels = 180.;
+
+	differential_context differentiel;
+	differentiel.distanceBetweenWheels	=180.;// mm
+	differentiel.maxLinearVelocity	 	=500.; // mm.s^-1
+	differentiel.maxAngularVelocity	 	=6.11; // rad.s^-1
+	differentiel.maxWheelPwmValue	 	=255.;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-//	int32_t t0, t;
-//	t0 = HAL_GetTick();
-	char buffer[50];
+	int32_t t0, t;
+	int32_t dt;
+	dt = 50;
+	t0 = HAL_GetTick();
+	char buffer[150];
 	while (1)
 	{
-		HAL_Delay(500);
-		// mise à jour de l'odométrie
-		odometry_update(&odometry);
-		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "x: %f y: %f theta: %f\r\n", odometry.position.x, odometry.position.y, odometry.position.theta), 5000); //s/ @suppress("Float formatting support")
+		t = HAL_GetTick() - t0;
+  	    //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "t: %d \r\n", t), 5000); //s/ @suppress("Float formatting support")
+		if (t%dt==0) {
+
+		  // mise �jour de l'odometrie
+			odometry_update(&odometry);
+//			 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "g: %d | d: %d \r\n",TIM4->CNT, TIM1->CNT ), 5000); //s/ @suppress("Float formatting support")
+
+			float linearDist = odometry.linearDisplacement;
+			float angularDist = odometry.angularDisplacement;
+
+		  // mesures vitesses des roues
+			float mesureD =  (linearDist + angularDist * distanceBetweenMotorWheels/2)/dt*1000;
+			float mesureG =  (linearDist - angularDist * distanceBetweenMotorWheels/2)/dt*1000;
+
+		  // mise a jour de la consigne en vitesse et vitese angulaire.
+
+
+			float vitD = 200; // vitesse du point de contact de la roue et du sol
+			float vitG = 200;
+
+		  // calcul de la commande moteurs Corrig�e par des pid.
+
+			float commandD = pid_update(&pidD, vitD, mesureD);
+			float commandG = pid_update(&pidG, vitG, mesureG);
+
+		  // debug commande moteurs
+			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "mes_g: %f | mes_d: %f | cmd_g: %f | cmd_d: %f | con_g: %f | con_d: %f  \r\n", //s/ @suppress("Float formatting support")
+																			mesureG, mesureD, commandG, commandD, vitG, vitD), 90000); //s/ @suppress("Float formatting support")
+
+
+		  // envoie de la commande aux moteurs
+			motor_setSpeed(&motorD, (int)commandD);
+			motor_setSpeed(&motorG, (int)commandG);
+
+		}
+		if (t%100==0) {
+//			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "x: %f y: %f theta: %f\r\n", odometry.position.x, odometry.position.y, odometry.position.theta), 5000); //s/ @suppress("Float formatting support")
+		}
 
     /* USER CODE END WHILE */
 
@@ -181,7 +246,7 @@ void SystemClock_Config(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -197,7 +262,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -216,7 +281,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Configure the main internal regulator output voltage 
+  /** Configure the main internal regulator output voltage
   */
   if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
   {
@@ -563,7 +628,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(char *file, uint32_t line)
-{ 
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

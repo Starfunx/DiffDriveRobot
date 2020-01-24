@@ -13,6 +13,7 @@ typedef struct {
     GPIO_TypeDef *      motBrake_Port; // brake pin port
     uint16_t            motBrake_Pin; // brake pin number
     bool                reverseDir; // reverse direction
+    int                 maxPWM; // max motor pwm 
 } motor_Context;
 
 void motor_init(motor_Context *motor);

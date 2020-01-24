@@ -22,6 +22,6 @@ void differential_update(differential_context* diffDrive,
     linearVelocity = linearVelocity * diffDrive->maxWheelPwmValue;
     angularVelocity = angularVelocity * diffDrive->maxWheelPwmValue;
 
-    *rightWheelVelocity = (linearVelocity + angularVelocity*diffDrive->distanceBetweenWheels/2)*2*PI/diffDrive->rightWheelRadius
-    *leftWheelVelocity =  (linearVelocity - angularVelocity*diffDrive->distanceBetweenWheels/2)*2*PI/diffDrive->leftWheelRadius
+    *rightWheelVelocity = (linearVelocity + angularVelocity*diffDrive->distanceBetweenWheels/2)*2*PI/diffDrive->rightWheelRadius;   
+    *leftWheelVelocity =  (linearVelocity - angularVelocity*diffDrive->distanceBetweenWheels/2)*2*PI/diffDrive->leftWheelRadius;    
 }

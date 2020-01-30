@@ -118,6 +118,12 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
+	int32_t t0, t;
+	int32_t dt;
+	dt = 50;
+	t0 = HAL_GetTick();
+	char buffer[150];
+
 	motor_Context motorG, motorD;
 
 	motorG.timer	 		= htim2;
@@ -157,16 +163,16 @@ int main(void)
 
 	pid_Context pidD, pidG;
 	pid_init(&pidD);
-	pidD.Kp			= 0.192;
-	pidD.Ti			= 0.0625;
-	pidD.Td			= 0.015625;
+	pidD.Kp			= 0.162;
+	pidD.Ti			= 0.12;
+	pidD.Td			= 0.03;
 	pidD.minOut		= -255;
 	pidD.maxOut		= 255;
 
 	pid_init(&pidG);
-	pidG.Kp			= 0.190;
-	pidG.Ti			= 0.0625;
-	pidG.Td			= 0.015625;
+	pidG.Kp			= 0.162;
+	pidG.Ti			= 0.12;
+	pidG.Td			= 0.03;
 	pidG.minOut		= -255;
 	pidG.maxOut		= 255;
 
@@ -174,19 +180,14 @@ int main(void)
 
 	differential_context differentiel;
 	differentiel.distanceBetweenWheels	=180.;// mm
-	differentiel.maxLinearVelocity	 	=500.; // mm.s^-1
-	differentiel.maxAngularVelocity	 	=6.11; // rad.s^-1
-	differentiel.maxWheelPwmValue	 	=255.;
+	differentiel.maxLinearVelocity	 	=400.; // mm.s^-1
+	differentiel.maxAngularVelocity	 	=5.55; // rad.s^-1
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	int32_t t0, t;
-	int32_t dt;
-	dt = 50;
-	t0 = HAL_GetTick();
-	char buffer[150];
+
 	while (1)
 	{
 		t = HAL_GetTick() - t0;
@@ -206,9 +207,14 @@ int main(void)
 
 		  // mise a jour de la consigne en vitesse et vitese angulaire.
 
+			float linarVelocity = 500;
+		  	float angularVelocity = 0.;
 
-			float vitD = 200; // vitesse du point de contact de la roue et du sol
-			float vitG = 200;
+			float vitD; // vitesse du point de contact de la roue et du sol
+			float vitG;
+
+			differential_update(&differentiel, linarVelocity, angularVelocity,
+				&vitD, &vitG);
 
 		  // calcul de la commande moteurs Corrig�e par des pid.
 

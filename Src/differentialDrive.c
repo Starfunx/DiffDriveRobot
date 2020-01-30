@@ -1,9 +1,5 @@
 #include "differentialDrive.h"
 
-void differential_init(differential_context *differential)
-{
-    differential->maxWheelPwmValue = 255.;
-}
 
 void differential_update(differential_context* diffDrive,
     float linearVelocity, float angularVelocity,
@@ -12,16 +8,16 @@ void differential_update(differential_context* diffDrive,
     linearVelocity = linearVelocity / diffDrive->maxLinearVelocity;
     angularVelocity = angularVelocity / diffDrive->maxAngularVelocity;
 
-    if ((abs(angularVelocity)+abs(linearVelocity)) > 1) {
+    if ((fabs(angularVelocity)+fabs(linearVelocity)) > 1) {
         // set the point in the square maxvelocity maxangularVelocity.
-        float m = linearVelocity + angularVelocity;
+        float m = fabs(angularVelocity)+fabs(linearVelocity);
         angularVelocity = angularVelocity/m;
         linearVelocity = linearVelocity/m;
     }
 
-    linearVelocity = linearVelocity * diffDrive->maxWheelPwmValue;
-    angularVelocity = angularVelocity * diffDrive->maxWheelPwmValue;
+    linearVelocity = linearVelocity * diffDrive->maxLinearVelocity;
+    angularVelocity = angularVelocity * diffDrive->maxAngularVelocity;
 
-    *rightWheelVelocity = (linearVelocity + angularVelocity*diffDrive->distanceBetweenWheels/2)*2*PI/diffDrive->rightWheelRadius;   
-    *leftWheelVelocity =  (linearVelocity - angularVelocity*diffDrive->distanceBetweenWheels/2)*2*PI/diffDrive->leftWheelRadius;    
+    *rightWheelVelocity = (linearVelocity + angularVelocity*diffDrive->distanceBetweenWheels/2);
+    *leftWheelVelocity =  (linearVelocity - angularVelocity*diffDrive->distanceBetweenWheels/2);
 }

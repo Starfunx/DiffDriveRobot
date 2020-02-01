@@ -2,19 +2,7 @@
 #define MOTION_CONTROL_H
 
 #include <math.h>
-
-#ifndef PI
-#define PI 3.141592
-#endif
-
-#ifndef POSITION_STRUCT
-#define POSITION_STRUCT
-typedef struct {
-    float x;
-    float y;
-    float theta;
-} _position;
-#endif
+#include "utils.h"
 
 typedef struct {
     _position consign;
@@ -24,6 +12,9 @@ typedef struct {
     float maxAngularVelocity;
     float Krho;
     float Kalpha;
+
+    float alpha;
+    float rho;
 } motionControl_context;
 
 void motionControl_init(motionControl_context *motionController);

@@ -17,4 +17,5 @@ void odometry_update(odometry_Context *odometry){
     odometry->position.x = odometry->position.x + odometry->linearDisplacement*cos(odometry->position.theta + odometry->angularDisplacement/2);
     odometry->position.y = odometry->position.y + odometry->linearDisplacement*sin(odometry->position.theta + odometry->angularDisplacement/2);
     odometry->position.theta = odometry->position.theta + odometry->angularDisplacement;
+    odometry->position.theta = constrainAngle(odometry->position.theta);
 }

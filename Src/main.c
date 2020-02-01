@@ -29,6 +29,7 @@
 #include "odometry.h"
 #include "pid.h"
 #include "differentialDrive.h"
+#include "motionControl.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -118,10 +119,11 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-	int32_t t0, t;
-	int32_t dt;
+	uint32_t t0, t, tloop;
+	uint32_t dt;
 	dt = 50;
 	t0 = HAL_GetTick();
+	tloop = t0 + dt;
 	char buffer[150];
 
 	motor_Context motorG, motorD;
@@ -183,6 +185,17 @@ int main(void)
 	differentiel.maxLinearVelocity	 	=400.; // mm.s^-1
 	differentiel.maxAngularVelocity	 	=5.55; // rad.s^-1
 
+	motionControl_context motionController;
+
+	motionControl_init(&motionController);
+	motionController.maxLinearAcceleration = 	100;
+	motionController.maxLinearVelocity = 		400;
+	motionController.maxAngularAcceleration = 	100;
+	motionController.maxAngularVelocity = 		400;
+	motionController.Krho = 					1.;
+	motionController.Kalpha = 					6.;
+
+	motionControl_setConsign(&motionController, odometry.position.x, odometry.position.y, odometry.position.theta);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -191,49 +204,71 @@ int main(void)
 	while (1)
 	{
 		t = HAL_GetTick() - t0;
-  	    //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "t: %d \r\n", t), 5000); //s/ @suppress("Float formatting support")
-		if (t%dt==0) {
+	if (t>tloop) {
+			tloop = tloop + dt;
 
-		  // mise �jour de l'odometrie
+			// mise �jour de l'odometrie
 			odometry_update(&odometry);
-//			 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "g: %d | d: %d \r\n",TIM4->CNT, TIM1->CNT ), 5000); //s/ @suppress("Float formatting support")
-
-			float linearDist = odometry.linearDisplacement;
-			float angularDist = odometry.angularDisplacement;
 
 		  // mesures vitesses des roues
+			float linearDist = odometry.linearDisplacement;
+			float angularDist = odometry.angularDisplacement;
 			float mesureD =  (linearDist + angularDist * distanceBetweenMotorWheels/2)/dt*1000;
 			float mesureG =  (linearDist - angularDist * distanceBetweenMotorWheels/2)/dt*1000;
 
 		  // mise a jour de la consigne en vitesse et vitese angulaire.
-
-			float linarVelocity = 500;
-		  	float angularVelocity = 0.;
+			float linearVelocity;
+		  	float angularVelocity;
+			motionControl_update(&motionController, odometry.position, &linearVelocity, &angularVelocity);
 
 			float vitD; // vitesse du point de contact de la roue et du sol
 			float vitG;
-
-			differential_update(&differentiel, linarVelocity, angularVelocity,
-				&vitD, &vitG);
+			differential_update(&differentiel, linearVelocity, angularVelocity, &vitD, &vitG);
 
 		  // calcul de la commande moteurs Corrig�e par des pid.
-
 			float commandD = pid_update(&pidD, vitD, mesureD);
 			float commandG = pid_update(&pidG, vitG, mesureG);
-
-		  // debug commande moteurs
-			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "mes_g: %f | mes_d: %f | cmd_g: %f | cmd_d: %f | con_g: %f | con_d: %f  \r\n", //s/ @suppress("Float formatting support")
-																			mesureG, mesureD, commandG, commandD, vitG, vitD), 90000); //s/ @suppress("Float formatting support")
-
 
 		  // envoie de la commande aux moteurs
 			motor_setSpeed(&motorD, (int)commandD);
 			motor_setSpeed(&motorG, (int)commandG);
 
+			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "alpha: %f omega: %f \r\n", //s/ @suppress("Float formatting support")
+					motionController.alpha, odometry.position.theta), 90000); //s/ @suppress("Float formatting support")
+
 		}
 		if (t%100==0) {
-//			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "x: %f y: %f theta: %f\r\n", odometry.position.x, odometry.position.y, odometry.position.theta), 5000); //s/ @suppress("Float formatting support")
+	}
+
+		if (t>0){
+			motionControl_setConsign(&motionController, 600., 600., 0.);
 		}
+		if (t>10000){
+			motor_breake(&motorG);
+			motor_breake(&motorD);
+		}
+
+
+//		if (t>2000){
+//			motionControl_setConsign(&motionController, 600., 600., 0.);
+//		}
+//		if (t>4000){
+//			motionControl_setConsign(&motionController, 0., 600., 0.);
+//		}
+//		if (t>6000){
+//			motionControl_setConsign(&motionController, 0., 0., 0.);
+//		}
+
+//			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "t: %d \r\n", t), 5000); //s/ @suppress("Float formatting support")
+
+//			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "g: %d | d: %d \r\n",TIM4->CNT, TIM1->CNT ), 5000); //s/ @suppress("Float formatting support")
+
+//			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "x: %f y: %f theta: %f\r\n", odometry.position.x, odometry.position.y, odometry.position.theta), 5000); //s/ @suppress("Float formatting support")
+
+//			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, " t = %d \r\n", t), 90000); //s/ @suppress("Float formatting support")
+
+//			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "mes_g: %f | mes_d: %f | cmd_g: %f | cmd_d: %f | con_g: %f | con_d: %f  \r\n", //s/ @suppress("Float formatting support")
+//																			mesureG, mesureD, commandG, commandD, vitG, vitD), 90000); //s/ @suppress("Float formatting support")
 
     /* USER CODE END WHILE */
 

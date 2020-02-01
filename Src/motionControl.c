@@ -13,11 +13,15 @@ void motionControl_init(motionControl_context *motionController){
 
 void motionControl_update(motionControl_context* motionController, _position robotPos,
                                           float* linearVelocity, float* angularVelocity){
-    float alpha = atan2(motionController->consign.y - robotPos.y,motionController->consign.x - robotPos.x) - robotPos.theta;
-    float rho  = sqrt(pow(motionController->consign.x - robotPos.x,2) + pow(motionController->consign.y - robotPos.y,2));
+    motionController->alpha = atan2(motionController->consign.y - robotPos.y,motionController->consign.x - robotPos.x);
+    motionController->alpha = constrainAngle(motionController->alpha) - robotPos.theta;
+    motionController->alpha = constrainAngle(motionController->alpha);
 
-    *LinearVelocity = motionController->Krho * rho;
-    *angularVelocity = motionController->Kalpha * np.sin(alpha)*np.cos(alpha);
+    motionController->rho  = sqrt(pow(motionController->consign.x - robotPos.x,2) + pow(motionController->consign.y - robotPos.y,2));
+
+     *linearVelocity = motionController->Krho * motionController->rho * cos(motionController->alpha);
+     *angularVelocity = motionController->Kalpha * sin(motionController->alpha);
+
 
 }
 

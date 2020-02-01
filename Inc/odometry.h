@@ -12,14 +12,7 @@
 #include "string.h"
 #include <stdio.h>
 
-#ifndef POSITION_STRUCT
-#define POSITION_STRUCT
-typedef struct {
-    float x;
-    float y;
-    float theta;
-} _position;
-#endif
+#include "utils.h"
 
 typedef struct {
     float encoderRes;

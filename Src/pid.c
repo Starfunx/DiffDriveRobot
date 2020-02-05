@@ -12,8 +12,8 @@ float pid_update(pid_Context *pid, float consign, float mesure){
    pid->integral = pid->integral + pid->Ti * error; //euler integration
    float derivate = pid->Td*(error - pid->last_error);
 
-   pid->integral = constrain(pid->integral, pid->minOut, pid->maxOut);
    pid->last_error = error;
+   pid->integral = constrain(pid->integral, pid->minOut, pid->maxOut);
    float retval = proportional + derivate + pid->integral;
    return constrain(retval, pid->minOut, pid->maxOut);
 }
@@ -22,8 +22,10 @@ float constrain(float value,float min,float max){
    if (value < min){
        return min;
    }
-   if (value > max){
+   else if (value > max){
        return max;
    }
-   return value;
+   else {
+       return value;
+   }
 }

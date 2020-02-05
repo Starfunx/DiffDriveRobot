@@ -119,12 +119,15 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-	uint32_t t0, t, tloop;
-	uint32_t dt;
-	dt = 50;
+	uint32_t dt, t, t0, tloop;
+	dt = 10;
 	t0 = HAL_GetTick();
 	tloop = t0 + dt;
 	char buffer[150];
+
+	uint32_t dtAff, tAff;
+	dtAff = 10;
+	tAff = t0 + dtAff;
 
 	motor_Context motorG, motorD;
 
@@ -134,8 +137,8 @@ int main(void)
 	motorG.motDir_Pin	 	= MotA_Dir_Pin;
 	motorG.motBrake_Port	= MotA_Brake_GPIO_Port;
 	motorG.motBrake_Pin	= MotA_Brake_Pin;
-	motorG.reverseDir	 	= false;
-	motorG.maxPWM = 255;
+	motorG.reverseDir	 	= true;
+	motorG.maxPWM = 240;
 
 	motorD.timer	 		= htim3;
 	motorD.channel	 	= TIM_CHANNEL_2;
@@ -143,8 +146,8 @@ int main(void)
 	motorD.motDir_Pin	 	= MotB_Dir_Pin;
 	motorD.motBrake_Port	= MotB_Brake_GPIO_Port;
 	motorD.motBrake_Pin	= MotB_Brake_Pin;
-	motorD.reverseDir	 	= true;
-	motorD.maxPWM = 255;
+	motorD.reverseDir	 	= false;
+	motorD.maxPWM = 240;
 
 	motor_init(&motorG);
 	motor_init(&motorD);
@@ -166,24 +169,24 @@ int main(void)
 	pid_Context pidD, pidG;
 	pid_init(&pidD);
 	pidD.Kp			= 0.162;
-	pidD.Ti			= 0.12;
-	pidD.Td			= 0.03;
-	pidD.minOut		= -255;
-	pidD.maxOut		= 255;
+	pidD.Ti			= 0.024;
+	pidD.Td			= 0.;//0.006;
+	pidD.minOut		= -250;
+	pidD.maxOut		= 249;
 
 	pid_init(&pidG);
 	pidG.Kp			= 0.162;
-	pidG.Ti			= 0.12;
-	pidG.Td			= 0.03;
-	pidG.minOut		= -255;
-	pidG.maxOut		= 255;
+	pidG.Ti			= 0.024;
+	pidG.Td			= 0.;//0.006;
+	pidG.minOut		= -247;
+	pidG.maxOut		= 248;
 
 	float distanceBetweenMotorWheels = 180.;
 
 	differential_context differentiel;
-	differentiel.distanceBetweenWheels	=180.;// mm
-	differentiel.maxLinearVelocity	 	=400.; // mm.s^-1
-	differentiel.maxAngularVelocity	 	=5.55; // rad.s^-1
+	differentiel.distanceBetweenWheels	= 180.;// mm
+	differentiel.maxLinearVelocity	 	= 400.; // mm.s^-1
+	differentiel.maxAngularVelocity	 	= 5.55; // rad.s^-1
 
 	motionControl_context motionController;
 
@@ -200,11 +203,39 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	float vitD, vitG; // vitesse du point de contact de la roue et du sol
+	float commandD, commandG;
+	float mesureD, mesureG;
+	float linearVelocity, angularVelocity;
+
+//	// Droite +  Gauche +
+//	commandD = 100;
+//	commandG = 100;
+//	motor_setSpeed(&motorD, (int)commandD);
+//	motor_setSpeed(&motorG, (int)commandG);
+//
+//	// Droite - Gauche -
+//	commandD = -100;
+//	commandG = -100;
+//	motor_setSpeed(&motorD, (int)commandD);
+//	motor_setSpeed(&motorG, (int)commandG);
+//
+//	// Droite + Gauche -
+//	commandD = 100;
+//	commandG = -100;
+//	motor_setSpeed(&motorD, (int)commandD);
+//	motor_setSpeed(&motorG, (int)commandG);
+//
+//	// Droite - Gauche +
+//	commandD = -100;
+//	commandG = 100;
+//	motor_setSpeed(&motorD, (int)commandD);
+//	motor_setSpeed(&motorG, (int)commandG);
 
 	while (1)
 	{
 		t = HAL_GetTick() - t0;
-	if (t>tloop) {
+		if (t>tloop) {
 			tloop = tloop + dt;
 
 			// mise �jour de l'odometrie
@@ -213,62 +244,62 @@ int main(void)
 		  // mesures vitesses des roues
 			float linearDist = odometry.linearDisplacement;
 			float angularDist = odometry.angularDisplacement;
-			float mesureD =  (linearDist + angularDist * distanceBetweenMotorWheels/2)/dt*1000;
-			float mesureG =  (linearDist - angularDist * distanceBetweenMotorWheels/2)/dt*1000;
+
+			float vitRoueAngu = angularDist * distanceBetweenMotorWheels/2;
+			mesureD =  (linearDist + vitRoueAngu)/dt*1000;
+			mesureG =  (linearDist - vitRoueAngu)/dt*1000;
 
 		  // mise a jour de la consigne en vitesse et vitese angulaire.
-			float linearVelocity;
-		  	float angularVelocity;
 			motionControl_update(&motionController, odometry.position, &linearVelocity, &angularVelocity);
 
-			float vitD; // vitesse du point de contact de la roue et du sol
-			float vitG;
+	      // Conversion consignes vitesses et vitesses angulaires en vitesses roues gauche et droite et controle qu'on soit dans le carré des vitesses
 			differential_update(&differentiel, linearVelocity, angularVelocity, &vitD, &vitG);
 
 		  // calcul de la commande moteurs Corrig�e par des pid.
-			float commandD = pid_update(&pidD, vitD, mesureD);
-			float commandG = pid_update(&pidG, vitG, mesureG);
+			commandD = pid_update(&pidD, vitD, mesureD);
+			commandG = pid_update(&pidG, vitG, mesureG);
 
 		  // envoie de la commande aux moteurs
 			motor_setSpeed(&motorD, (int)commandD);
 			motor_setSpeed(&motorG, (int)commandG);
-
-			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "alpha: %f omega: %f \r\n", //s/ @suppress("Float formatting support")
-					motionController.alpha, odometry.position.theta), 90000); //s/ @suppress("Float formatting support")
-
 		}
-		if (t%100==0) {
-	}
 
 		if (t>0){
+			motionControl_setConsign(&motionController, 600., 0., 0.);
+		}
+		if (t>5000){
 			motionControl_setConsign(&motionController, 600., 600., 0.);
 		}
 		if (t>10000){
+			motionControl_setConsign(&motionController, 0., 600., 0.);
+		}
+		if (t>15000){
+			motionControl_setConsign(&motionController, 0., 0., 0.);
+		}
+
+		if (t>20000){
 			motor_breake(&motorG);
 			motor_breake(&motorD);
 		}
 
-
-//		if (t>2000){
-//			motionControl_setConsign(&motionController, 600., 600., 0.);
-//		}
-//		if (t>4000){
-//			motionControl_setConsign(&motionController, 0., 600., 0.);
-//		}
-//		if (t>6000){
-//			motionControl_setConsign(&motionController, 0., 0., 0.);
-//		}
-
+		if (t>tAff){
+			tAff = tAff + dtAff;
+			  // temps
 //			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "t: %d \r\n", t), 5000); //s/ @suppress("Float formatting support")
 
+			  // encoders
 //			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "g: %d | d: %d \r\n",TIM4->CNT, TIM1->CNT ), 5000); //s/ @suppress("Float formatting support")
 
+			  //LinearDist AngularDist
+//			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "linearDist: %f | angularDist: %f \r\n",odometry.linearDisplacement, odometry.angularDisplacement ), 5000); //s/ @suppress("Float formatting support")
+
+			  // odometry
 //			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "x: %f y: %f theta: %f\r\n", odometry.position.x, odometry.position.y, odometry.position.theta), 5000); //s/ @suppress("Float formatting support")
 
-//			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, " t = %d \r\n", t), 90000); //s/ @suppress("Float formatting support")
+			 // asservissement roues
+			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "mes_g: %f | mes_d: %f | cmd_g: %f | cmd_d: %f | con_g: %f | con_d: %f | cmig: %d | cmid: %d \r\n", mesureG, mesureD, commandG, commandD, vitG, vitD, (int)commandG, (int)commandD), 90000); //s/ @suppress("Float formatting support")
 
-//			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "mes_g: %f | mes_d: %f | cmd_g: %f | cmd_d: %f | con_g: %f | con_d: %f  \r\n", //s/ @suppress("Float formatting support")
-//																			mesureG, mesureD, commandG, commandD, vitG, vitD), 90000); //s/ @suppress("Float formatting support")
+		}
 
     /* USER CODE END WHILE */
 
@@ -617,7 +648,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, MotA_Dir_Pin|MotB_Dir_Pin|MotB_Brake_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, MotB_Dir_Pin|MotA_Dir_Pin|MotB_Brake_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(MotA_Brake_GPIO_Port, MotA_Brake_Pin, GPIO_PIN_RESET);
@@ -628,8 +659,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MotA_Dir_Pin MotB_Dir_Pin MotB_Brake_Pin */
-  GPIO_InitStruct.Pin = MotA_Dir_Pin|MotB_Dir_Pin|MotB_Brake_Pin;
+  /*Configure GPIO pins : MotB_Dir_Pin MotA_Dir_Pin MotB_Brake_Pin */
+  GPIO_InitStruct.Pin = MotB_Dir_Pin|MotA_Dir_Pin|MotB_Brake_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

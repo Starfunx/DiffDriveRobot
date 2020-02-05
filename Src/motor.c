@@ -7,7 +7,7 @@ void motor_init(motor_Context *motor){
 }
 
 void motor_setSpeed(motor_Context *motor, int speed){
-    if (motor->reverseDir){
+	if (motor->reverseDir){
         speed = -speed;
     }
     if (speed < 0){
@@ -17,6 +17,15 @@ void motor_setSpeed(motor_Context *motor, int speed){
     else {
         HAL_GPIO_WritePin(motor->motDir_Port, motor->motDir_Pin, GPIO_PIN_RESET);
     }
+	 // static int k;
+     //
+	 //    if (!k)
+	 //    	k = 1;
+	 //    k++;
+	 //    if (k > 1000)
+	 //    {
+	 //    	k++;
+	 //    }
 
     if (speed > motor->maxPWM){
         speed = motor->maxPWM;
@@ -33,7 +42,8 @@ void motor_unbreake(motor_Context *motor){
     HAL_GPIO_WritePin(motor->motBrake_Port, motor->motBrake_Pin, GPIO_PIN_RESET);
 }
 
-void setPWM(TIM_HandleTypeDef timer, uint32_t channel, uint16_t period, uint16_t pulse) {
+void setPWM(TIM_HandleTypeDef timer, uint32_t channel, uint16_t period, uint16_t pulse)
+{
 	  HAL_TIM_PWM_Stop(&timer, channel);    // stop generation of pwm
 	  TIM_OC_InitTypeDef sConfigOC;   timer.Init.Period = period;           // set the period duration
 	  HAL_TIM_PWM_Init(&timer);  // reinititialise with new period value

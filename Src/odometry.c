@@ -1,8 +1,12 @@
 #include "odometry.h"
 
-void odometry_init(odometry_Context *odometry){
+void odometry_init(odometry_Context *odometry, float x0, float y0, float theta0){
     odometry->linearDisplacement =0.;
     odometry->angularDisplacement =0.;
+
+    odometry->position.x     = x0;
+    odometry->position.y     = y0;
+    odometry->position.theta = theta0;
 }
 
 void odometry_update(odometry_Context *odometry){

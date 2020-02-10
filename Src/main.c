@@ -1,3 +1,4 @@
+// coding utf-8
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
@@ -138,7 +139,8 @@ int main(void)
 	motorG.motBrake_Port	= MotA_Brake_GPIO_Port;
 	motorG.motBrake_Pin	= MotA_Brake_Pin;
 	motorG.reverseDir	 	= true;
-	motorG.maxPWM = 240;
+	motorG.maxPWM = 255;
+	motor_init(&motorG);
 
 	motorD.timer	 		= htim3;
 	motorD.channel	 	= TIM_CHANNEL_2;
@@ -147,9 +149,7 @@ int main(void)
 	motorD.motBrake_Port	= MotB_Brake_GPIO_Port;
 	motorD.motBrake_Pin	= MotB_Brake_Pin;
 	motorD.reverseDir	 	= false;
-	motorD.maxPWM = 240;
-
-	motor_init(&motorG);
+	motorD.maxPWM = 255;
 	motor_init(&motorD);
 
 	odometry_Context odometry;
@@ -159,78 +159,49 @@ int main(void)
 	odometry.wheelRadiusR = 			64.8/2.;
 	odometry.wheelRadiusL = 			64.8/2.;
 	odometry.distanceBetweenWheels = 	210.;
-
-	odometry_init(&odometry);
-
-	odometry.position.x = 0.;
-	odometry.position.y = 0.;
-	odometry.position.theta = 0.;
+	odometry_init(&odometry, 0., 0., 0.); // x0, y0, theta0
 
 	pid_Context pidD, pidG;
-	pid_init(&pidD);
 	pidD.Kp			= 0.162;
 	pidD.Ti			= 0.024;
-	pidD.Td			= 0.;//0.006;
-	pidD.minOut		= -250;
-	pidD.maxOut		= 249;
+	pidD.Td			= 0.006;
+	pidD.minOut		= -255;
+	pidD.maxOut		= 255;
+	pid_init(&pidD);
 
-	pid_init(&pidG);
 	pidG.Kp			= 0.162;
 	pidG.Ti			= 0.024;
-	pidG.Td			= 0.;//0.006;
-	pidG.minOut		= -247;
-	pidG.maxOut		= 248;
+	pidG.Td			= 0.006;
+	pidG.minOut		= -255;
+	pidG.maxOut		= 255;
+	pid_init(&pidG);
 
-	float distanceBetweenMotorWheels = 180.;
+	float distBetweenMotorWheels = 180.;// mm
 
 	differential_context differentiel;
-	differentiel.distanceBetweenWheels	= 180.;// mm
-	differentiel.maxLinearVelocity	 	= 400.; // mm.s^-1
+	differentiel.distanceBetweenWheels	= distBetweenMotorWheels;
+	differentiel.maxLinearVelocity	 	= 450.; // mm.s^-1
 	differentiel.maxAngularVelocity	 	= 5.55; // rad.s^-1
 
 	motionControl_context motionController;
 
 	motionControl_init(&motionController);
 	motionController.maxLinearAcceleration = 	100;
-	motionController.maxLinearVelocity = 		400;
+	motionController.maxLinearVelocity = 		450;
 	motionController.maxAngularAcceleration = 	100;
-	motionController.maxAngularVelocity = 		400;
-	motionController.Krho = 					1.;
-	motionController.Kalpha = 					6.;
+	motionController.maxAngularVelocity = 		5.5;
+	motionController.Krho = 					3.;
+	motionController.Kalpha = 					12.;
 
 	motionControl_setConsign(&motionController, odometry.position.x, odometry.position.y, odometry.position.theta);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	float vitD, vitG; // vitesse du point de contact de la roue et du sol
+	float vitD, vitG; // vitesse consigne du point de contact de la roue et du sol
 	float commandD, commandG;
-	float mesureD, mesureG;
+	float mesureD, mesureG; // vitesse mesuree du point de contact de la roue et du sol
 	float linearVelocity, angularVelocity;
-
-//	// Droite +  Gauche +
-//	commandD = 100;
-//	commandG = 100;
-//	motor_setSpeed(&motorD, (int)commandD);
-//	motor_setSpeed(&motorG, (int)commandG);
-//
-//	// Droite - Gauche -
-//	commandD = -100;
-//	commandG = -100;
-//	motor_setSpeed(&motorD, (int)commandD);
-//	motor_setSpeed(&motorG, (int)commandG);
-//
-//	// Droite + Gauche -
-//	commandD = 100;
-//	commandG = -100;
-//	motor_setSpeed(&motorD, (int)commandD);
-//	motor_setSpeed(&motorG, (int)commandG);
-//
-//	// Droite - Gauche +
-//	commandD = -100;
-//	commandG = 100;
-//	motor_setSpeed(&motorD, (int)commandD);
-//	motor_setSpeed(&motorG, (int)commandG);
 
 	while (1)
 	{
@@ -238,24 +209,21 @@ int main(void)
 		if (t>tloop) {
 			tloop = tloop + dt;
 
-			// mise �jour de l'odometrie
+		  // odometry position and displacement update
 			odometry_update(&odometry);
 
 		  // mesures vitesses des roues
-			float linearDist = odometry.linearDisplacement;
-			float angularDist = odometry.angularDisplacement;
-
-			float vitRoueAngu = angularDist * distanceBetweenMotorWheels/2;
-			mesureD =  (linearDist + vitRoueAngu)/dt*1000;
-			mesureG =  (linearDist - vitRoueAngu)/dt*1000;
+			float wheelDistAng = odometry.angularDisplacement * distBetweenMotorWheels/2;
+			mesureD =  (odometry.linearDisplacement + wheelDistAng)/dt*1000;
+			mesureG =  (odometry.linearDisplacement - wheelDistAng)/dt*1000;
 
 		  // mise a jour de la consigne en vitesse et vitese angulaire.
 			motionControl_update(&motionController, odometry.position, &linearVelocity, &angularVelocity);
 
-	      // Conversion consignes vitesses et vitesses angulaires en vitesses roues gauche et droite et controle qu'on soit dans le carré des vitesses
+	      // Conversion consignes vitesses et vitesses angulaires en vitesses roues gauche et droite et controle qu'on soit dans le carre des vitesses
 			differential_update(&differentiel, linearVelocity, angularVelocity, &vitD, &vitG);
 
-		  // calcul de la commande moteurs Corrig�e par des pid.
+		  // calcul de la commande moteurs Corrigee par des pid.
 			commandD = pid_update(&pidD, vitD, mesureD);
 			commandG = pid_update(&pidG, vitG, mesureG);
 

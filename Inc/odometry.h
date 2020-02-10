@@ -26,6 +26,6 @@ typedef struct {
     int16_t *rightTicks, *leftTicks;
 } odometry_Context;
 
-void odometry_init(odometry_Context *odometry);
+void odometry_init(odometry_Context *odometry, float x0, float y0, float theta0);
 void odometry_update(odometry_Context *odometry);
 #endif

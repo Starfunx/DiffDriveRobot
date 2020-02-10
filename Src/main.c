@@ -1,4 +1,3 @@
-// coding utf-8
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
@@ -74,6 +73,45 @@ static void MX_TIM3_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+/* USER CODE BEGIN 0 */
+char buffer[190];
+
+/* Single byte to store input */
+uint8_t byte;
+char command[190];
+char *c = command;
+gcodeCommand_context gcodeCommand;
+/* UART2 Interrupt Service Routine */
+
+/* This callback is called by the HAL_UART_IRQHandler when the given number of bytes are received */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART2)
+  {
+    *c = byte;
+    c = c+1;
+
+    if ((int)(c-command[0]) >= 190)){
+        // error, command cannot be longer than 190 char.
+    }
+    else if (byte == '\n'){ //
+        if (gcode_parseAscii(&gcodeCommand, command)){
+//        	HAL_UART_Transmit(&huart2, (uint8_t*)command, sprintf(buffer, command), 90000);
+
+        	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "command's G: %d\r\n", gcodeCommand.G), 90000);
+
+            c = command;
+        }
+        else {
+            // error in command
+        }
+    }
+    /* Receive one byte in interrupt mode */
+    HAL_UART_Receive_IT(&huart2, &byte, 1);
+  }
+}
+
 void debugPrintln(UART_HandleTypeDef *huart, char _out[]){
 	HAL_UART_Transmit(huart, (uint8_t *) _out, strlen(_out), 10);
 	char newline[2] = "\r\n";
@@ -117,12 +155,12 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+	HAL_UART_Receive_IT(&huart2, &byte, 1);
 
 	uint32_t dt, t, t0, tloop;
 	dt = 10;
 	t0 = HAL_GetTick();
 	tloop = t0 + dt;
-	char buffer[150];
 
 	uint32_t dtAff, tAff;
 	dtAff = 10;
@@ -193,7 +231,7 @@ int main(void)
 	robot.pidG = &pidG;
 	robot.distBetweenMotorWheels = distBetweenMotorWheels;
 
- /* USER CODE END 2 */
+  /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -204,25 +242,6 @@ int main(void)
 			tloop = tloop + dt;
 			robot_update(&robot, dt);
 		}
-
-		if (t>0){
-			motionControl_setConsign(&motionController, 600., 0., 0.);
-		}
-		if (t>5000){
-			motionControl_setConsign(&motionController, 600., 600., 0.);
-		}
-		if (t>10000){
-			motionControl_setConsign(&motionController, 0., 600., 0.);
-		}
-		if (t>15000){
-			motionControl_setConsign(&motionController, 0., 0., 0.);
-		}
-
-		if (t>20000){
-			motor_breake(&motorG);
-			motor_breake(&motorD);
-		}
-
 		if (t>tAff){
 			tAff = tAff + dtAff;
 			  // temps
@@ -241,7 +260,6 @@ int main(void)
 			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "mes_g: %f | mes_d: %f | cmd_g: %f | cmd_d: %f | con_g: %f | con_d: %f \r\n", robot.mesureG, robot.mesureD, robot.commandG, robot.commandD, robot.vitG, robot.vitD), 90000); //s/ @suppress("Float formatting support")
 
 		}
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -2,6 +2,7 @@
 #define DIFFERENTIAL_DRIVE_H
 
 #include <stdlib.h>
+#include <math.h>
 
 #ifndef PI
 #define PI 3.141592
@@ -12,9 +13,9 @@ typedef struct {
 
     float maxLinearVelocity;
     float maxAngularVelocity;
-} differential_context;
+} differential_Context;
 
-void differential_update(differential_context* diffdrive,
+void differential_update(differential_Context* diffdrive,
     float linearSpeed, float angularSpeed,
     float *wheelSpeedR, float *wheelRadiusL);
 

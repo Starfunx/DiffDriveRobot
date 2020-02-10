@@ -15,12 +15,12 @@ typedef struct {
 
     float alpha;
     float rho;
-} motionControl_context;
+} motionControl_Context;
 
-void motionControl_init(motionControl_context *motionController);
-void motionControl_update(motionControl_context* motionController, _position robotPos,
+void motionControl_init(motionControl_Context *motionController, float xc, float yc, float thetac);
+void motionControl_update(motionControl_Context* motionController, _position robotPos,
     float* LinearVelocity, float* AngularVelocity);
-void motionControl_setConsign(motionControl_context* motionController,
+void motionControl_setConsign(motionControl_Context* motionController,
     float x, float y, float theta);
 
 #endif

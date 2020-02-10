@@ -1,7 +1,7 @@
 #include "differentialDrive.h"
 
 
-void differential_update(differential_context* diffDrive,
+void differential_update(differential_Context* diffDrive,
     float linearVelocity, float angularVelocity,
     float* rightWheelVelocity, float* leftWheelVelocity)
 {

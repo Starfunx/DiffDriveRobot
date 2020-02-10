@@ -22,6 +22,13 @@ typedef struct {
 	float linearVelocity, angularVelocity;
 
     int mode;
+    // Deplacement rapide/ lin�aire?
+    // sens d'arivé important oui/non?
+    // sens d'arrivé 1st devant/derierre?
+    // angle final oui/non?
+
+    // position d'asservissemnt ? (impact sur les parametres précedents??)
+
 }diffDriveRobot_Context;
 
 void robot_init(diffDriveRobot_Context *robot, float x0, float y0, float theta0);

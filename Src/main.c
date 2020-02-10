@@ -26,12 +26,9 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include <stdio.h>
-// #include "motor.h"
-// #include "odometry.h"
-// #include "pid.h"
-// #include "differentialDrive.h"
-// #include "motionControl.h"
 #include "robot.h"
+#include "gcode.h"
+#include "command.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

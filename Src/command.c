@@ -9,7 +9,7 @@ void peekCommand(gcodeCommand_context* command, diffDriveRobot_Context* robot){
             	breakeMotors(robot);
               	break;
             case 19:
-            	unbreakeMotors(robot);
+            	unBreakeMotors(robot);
               	break;
             default:
             	break;// default statements

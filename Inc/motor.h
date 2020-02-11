@@ -20,6 +20,6 @@ void motor_init(motor_Context *motor);
 void motor_setSpeed(motor_Context* motor, int speed);
 void motor_breake(motor_Context *motor);
 void motor_unbreake(motor_Context *motor);
-
+void setPWM(TIM_HandleTypeDef timer, uint32_t channel, uint16_t period, uint16_t pulse);
 
 #endif

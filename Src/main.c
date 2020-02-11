@@ -73,8 +73,14 @@ static void MX_TIM3_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+motor_Context motorD, motorG;
+odometry_Context odometry;
+pid_Context pidD, pidG;
+float distBetweenMotorWheels;// mm
+differential_Context differentiel;
+motionControl_Context motionController;
+diffDriveRobot_Context robot;
 
-/* USER CODE BEGIN 0 */
 char buffer[190];
 
 /* Single byte to store input */
@@ -92,13 +98,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     *c = byte;
     c = c+1;
 
-    if ((int)(c-command[0]) >= 190)){
+    if ((int)(c-command[0]) >= 190){
         // error, command cannot be longer than 190 char.
     }
-    else if (byte == '\n'){ //
+    else if (byte == '\n'){ // ou fin de chaine
         if (gcode_parseAscii(&gcodeCommand, command)){
 //        	HAL_UART_Transmit(&huart2, (uint8_t*)command, sprintf(buffer, command), 90000);
-
+            peekCommand(&gcodeCommand, &robot);
         	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "command's G: %d\r\n", gcodeCommand.G), 90000);
 
             c = command;
@@ -126,7 +132,14 @@ void debugPrintln(UART_HandleTypeDef *huart, char _out[]){
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  uint32_t dt, t, t0, tloop;
+  dt = 10;
+  t0 = HAL_GetTick();
+  tloop = t0 + dt;
 
+  uint32_t dtAff, tAff;
+  dtAff = 10;
+  tAff = t0 + dtAff;
   /* USER CODE END 1 */
 
 
@@ -155,82 +168,8 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+    setup();
 	HAL_UART_Receive_IT(&huart2, &byte, 1);
-
-	uint32_t dt, t, t0, tloop;
-	dt = 10;
-	t0 = HAL_GetTick();
-	tloop = t0 + dt;
-
-	uint32_t dtAff, tAff;
-	dtAff = 10;
-	tAff = t0 + dtAff;
-
-	motor_Context motorD, motorG;
-	motorD.timer	 		= htim3;
-	motorD.channel	 	= TIM_CHANNEL_2;
-	motorD.motDir_Port	= MotB_Dir_GPIO_Port;
-	motorD.motDir_Pin	 	= MotB_Dir_Pin;
-	motorD.motBrake_Port	= MotB_Brake_GPIO_Port;
-	motorD.motBrake_Pin	= MotB_Brake_Pin;
-	motorD.reverseDir	 	= false;
-	motorD.maxPWM = 255;
-
-	motorG.timer	 		= htim2;
-	motorG.channel	 	= TIM_CHANNEL_2;
-	motorG.motDir_Port	= MotA_Dir_GPIO_Port;
-	motorG.motDir_Pin	 	= MotA_Dir_Pin;
-	motorG.motBrake_Port	= MotA_Brake_GPIO_Port;
-	motorG.motBrake_Pin	= MotA_Brake_Pin;
-	motorG.reverseDir	 	= true;
-	motorG.maxPWM = 255;
-
-	odometry_Context odometry;
-	odometry.rightTicks = (int16_t*)&TIM4->CNT; // cast uint vers int
-	odometry.leftTicks =  (int16_t*)&TIM1->CNT;
-	odometry.encoderRes = 				480; // tick/tour
-	odometry.wheelRadiusR = 			64.8/2.;
-	odometry.wheelRadiusL = 			64.8/2.;
-	odometry.distanceBetweenWheels = 	210.;
-
-	pid_Context pidD, pidG;
-	pidD.Kp			= 0.162;
-	pidD.Ti			= 0.024;
-	pidD.Td			= 0.006;
-	pidD.minOut		= -255;
-	pidD.maxOut		= 255;
-
-	pidG.Kp			= 0.162;
-	pidG.Ti			= 0.024;
-	pidG.Td			= 0.006;
-	pidG.minOut		= -255;
-	pidG.maxOut		= 255;
-
-	float distBetweenMotorWheels = 180.;// mm
-
-	differential_Context differentiel;
-	differentiel.distanceBetweenWheels	= distBetweenMotorWheels;
-	differentiel.maxLinearVelocity	 	= 450.; // mm.s^-1
-	differentiel.maxAngularVelocity	 	= 5.55; // rad.s^-1
-
-	motionControl_Context motionController;
-	motionController.maxLinearAcceleration = 	100;
-	motionController.maxLinearVelocity = 		450;
-	motionController.maxAngularAcceleration = 	100;
-	motionController.maxAngularVelocity = 		5.5;
-	motionController.Krho = 					3.;
-	motionController.Kalpha = 					12.;
-
-	diffDriveRobot_Context robot;
-	robot.odometry = &odometry;
-	robot.differential = &differentiel;
-	robot.motionController = &motionController;
-	robot.motorD = &motorD;
-	robot.motorG = &motorG;
-	robot.pidD = &pidD;
-	robot.pidG = &pidG;
-	robot.distBetweenMotorWheels = distBetweenMotorWheels;
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -635,7 +574,66 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void setup(){
+motorD.timer	 		= htim3;
+motorD.channel	 	= TIM_CHANNEL_2;
+motorD.motDir_Port	= MotB_Dir_GPIO_Port;
+motorD.motDir_Pin	 	= MotB_Dir_Pin;
+motorD.motBrake_Port	= MotB_Brake_GPIO_Port;
+motorD.motBrake_Pin	= MotB_Brake_Pin;
+motorD.reverseDir	 	= false;
+motorD.maxPWM = 255;
 
+motorG.timer	 		= htim2;
+motorG.channel	 	= TIM_CHANNEL_2;
+motorG.motDir_Port	= MotA_Dir_GPIO_Port;
+motorG.motDir_Pin	 	= MotA_Dir_Pin;
+motorG.motBrake_Port	= MotA_Brake_GPIO_Port;
+motorG.motBrake_Pin	= MotA_Brake_Pin;
+motorG.reverseDir	 	= true;
+motorG.maxPWM = 255;
+
+odometry.rightTicks = (int16_t*)&TIM4->CNT; // cast uint vers int
+odometry.leftTicks =  (int16_t*)&TIM1->CNT;
+odometry.encoderRes = 				480; // tick/tour
+odometry.wheelRadiusR = 			64.8/2.;
+odometry.wheelRadiusL = 			64.8/2.;
+odometry.distanceBetweenWheels = 	210.;
+
+pidD.Kp			= 0.162;
+pidD.Ti			= 0.024;
+pidD.Td			= 0.006;
+pidD.minOut		= -255;
+pidD.maxOut		= 255;
+
+pidG.Kp			= 0.162;
+pidG.Ti			= 0.024;
+pidG.Td			= 0.006;
+pidG.minOut		= -255;
+pidG.maxOut		= 255;
+
+distBetweenMotorWheels = 180.;// mm
+
+differentiel.distanceBetweenWheels	= distBetweenMotorWheels;
+differentiel.maxLinearVelocity	 	= 450.; // mm.s^-1
+differentiel.maxAngularVelocity	 	= 5.55; // rad.s^-1
+
+motionController.maxLinearAcceleration = 	100;
+motionController.maxLinearVelocity = 		450;
+motionController.maxAngularAcceleration = 	100;
+motionController.maxAngularVelocity = 		5.5;
+motionController.Krho = 					3.;
+motionController.Kalpha = 					12.;
+
+robot.odometry = &odometry;
+robot.differential = &differentiel;
+robot.motionController = &motionController;
+robot.motorD = &motorD;
+robot.motorG = &motorG;
+robot.pidD = &pidD;
+robot.pidG = &pidG;
+robot.distBetweenMotorWheels = distBetweenMotorWheels;
+}
 /* USER CODE END 4 */
 
 /**

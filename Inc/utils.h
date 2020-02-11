@@ -1,7 +1,9 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#define PI 3.141592
+#include <math.h>
+
+#define PI 3.14159265358979323846
 
 typedef struct {
     float x;

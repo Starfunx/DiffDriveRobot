@@ -41,124 +41,35 @@ typedef struct {
     bool internalCommand;
 }gcodeCommand_context;
 
-inline bool hasM(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 2)!=0);
-}
-inline bool hasN(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 1)!=0);
-}
-inline bool hasG(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 4)!=0);
-}
-inline bool hasX(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 8)!=0);
-}
-inline void unsetX(gcodeCommand_context* gcodeCommand) {
-    gcodeCommand->params &= ~8;
-}
-inline bool hasY(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 16)!=0);
-}
-inline void unsetY(gcodeCommand_context* gcodeCommand) {
-    gcodeCommand->params &= ~16;
-}
-inline bool hasZ(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 32)!=0);
-}
-inline void unsetZ(gcodeCommand_context* gcodeCommand) {
-    gcodeCommand->params &= ~32;
-}
-inline bool hasNoXYZ(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 56)==0);
-}
-inline bool hasE(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 64)!=0);
-}
-inline bool hasF(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 256)!=0);
-}
-inline bool hasT(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 512)!=0);
-}
-inline bool hasS(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 1024)!=0);
-}
-inline bool hasP(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 2048)!=0);
-}
-inline bool hasString(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params & 32768)!=0);
-}
-inline bool hasI(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params2 & 1)!=0);
-}
-inline bool hasJ(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params2 & 2)!=0);
-}
-inline bool hasR(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params2 & 4)!=0);
-}
-inline bool hasD(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params2 & 8)!=0);
-}
-inline bool hasC(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params2 & 16)!=0);
-}
-inline bool hasH(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params2 & 32)!=0);
-}
-inline bool hasA(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params2 & 64)!=0);
-}
-inline bool hasB(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params2 & 128)!=0);
-}
-inline bool hasK(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params2 & 256)!=0);
-}
-inline bool hasL(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params2 & 512)!=0);
-}
-inline bool hasO(gcodeCommand_context* gcodeCommand)
-{
-    return ((gcodeCommand->params2 & 1024)!=0);
-}
 
-inline long getS(gcodeCommand_context* gcodeCommand, long def)
-{
-    return (hasS(gcodeCommand) ? gcodeCommand->S : def);
-}
-inline long getP(gcodeCommand_context* gcodeCommand, long def)
-{
-    return (hasP(gcodeCommand) ? gcodeCommand->P : def);
-}
+bool hasM(gcodeCommand_context* gcodeCommand);
+bool hasN(gcodeCommand_context* gcodeCommand);
+bool hasG(gcodeCommand_context* gcodeCommand);
+bool hasX(gcodeCommand_context* gcodeCommand);
+bool hasY(gcodeCommand_context* gcodeCommand);
+bool hasZ(gcodeCommand_context* gcodeCommand);
+bool hasNoXYZ(gcodeCommand_context* gcodeCommand);
+bool hasE(gcodeCommand_context* gcodeCommand);
+bool hasF(gcodeCommand_context* gcodeCommand);
+bool hasT(gcodeCommand_context* gcodeCommand);
+bool hasS(gcodeCommand_context* gcodeCommand);
+bool hasP(gcodeCommand_context* gcodeCommand);
+bool hasString(gcodeCommand_context* gcodeCommand);
+bool hasI(gcodeCommand_context* gcodeCommand);
+bool hasJ(gcodeCommand_context* gcodeCommand);
+bool hasR(gcodeCommand_context* gcodeCommand);
+bool hasD(gcodeCommand_context* gcodeCommand);
+bool hasC(gcodeCommand_context* gcodeCommand);
+bool hasH(gcodeCommand_context* gcodeCommand);
+bool hasA(gcodeCommand_context* gcodeCommand);
+bool hasB(gcodeCommand_context* gcodeCommand);
+bool hasK(gcodeCommand_context* gcodeCommand);
+bool hasL(gcodeCommand_context* gcodeCommand);
+bool hasO(gcodeCommand_context* gcodeCommand);
+long getS(gcodeCommand_context* gcodeCommand, long def);
+long getP(gcodeCommand_context* gcodeCommand, long def);
+void setFormatError(gcodeCommand_context* gcodeCommand);
 
-inline void setFormatError(gcodeCommand_context* gcodeCommand) {
-    gcodeCommand->params2 |= 32768;
-}
 
 bool gcode_parseAscii(gcodeCommand_context* gcodeCommand, char *line);
 float parseFloatValue(char *s);

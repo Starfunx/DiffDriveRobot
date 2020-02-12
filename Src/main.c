@@ -37,6 +37,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -73,50 +74,114 @@ static void MX_TIM3_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-motor_Context motorD, motorG;
-odometry_Context odometry;
-pid_Context pidD, pidG;
-float distBetweenMotorWheels;// mm
-differential_Context differentiel;
-motionControl_Context motionController;
-diffDriveRobot_Context robot;
 
-char buffer[190];
+UART_HandleTypeDef huart2;
 
 /* Single byte to store input */
+
+char buffer[190];
 uint8_t byte;
 char command[190];
 char *c = command;
 gcodeCommand_context gcodeCommand;
+
+void SystemClock_Config(void);
+
 /* UART2 Interrupt Service Routine */
+//void USART2_IRQHandler(void)
+//{
+//  HAL_UART_IRQHandler(&huart2);
+//}
 
 /* This callback is called by the HAL_UART_IRQHandler when the given number of bytes are received */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//  if (huart->Instance == USART2)
+//  {
+//    /* Transmit one byte with 100 ms timeout */
+//    HAL_UART_Transmit(&huart2, &byte, 1, 100);
+//
+//    /* Receive one byte in interrupt mode */
+//    HAL_UART_Receive_IT(&huart2, &byte, 1);
+//  }
+//}
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
+//{
+//  if (huart->Instance == USART2)
+//  {
+//	   *c = byte;
+//	    c = c+1;
+//
+//	    if ((int)(c-command[0]) >= 190){
+//	        // error, command cannot be longer than 190 char.
+//	    }
+//	    else if (byte == '\n'){ // ou fin de chaine
+//	        if (gcode_parseAscii(&gcodeCommand, command)){
+//	//        	HAL_UART_Transmit(&huart2, (uint8_t*)command, sprintf(buffer, command), 90000);
+//	            peekCommand(&gcodeCommand, &robot);
+//	        	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "command's G: %d\r\n", gcodeCommand.G), 90000);
+//
+//	            c = command;
+//	        }
+//	        else {
+//	            // error in command
+//	        }
+//	    }
+//	    /* Receive one byte in interrupt mode */
+//	    HAL_UART_Receive_IT(&huart2, &byte, 1);
+//  }
+//}
+
+void uart_gpio_init()
 {
-  if (huart->Instance == USART2)
-  {
-    *c = byte;
-    c = c+1;
+  GPIO_InitTypeDef GPIO_InitStruct;
 
-    if ((int)(c-command[0]) >= 190){
-        // error, command cannot be longer than 190 char.
-    }
-    else if (byte == '\n'){ // ou fin de chaine
-        if (gcode_parseAscii(&gcodeCommand, command)){
-//        	HAL_UART_Transmit(&huart2, (uint8_t*)command, sprintf(buffer, command), 90000);
-            peekCommand(&gcodeCommand, &robot);
-        	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "command's G: %d\r\n", gcodeCommand.G), 90000);
+  __GPIOA_CLK_ENABLE();
 
-            c = command;
-        }
-        else {
-            // error in command
-        }
-    }
-    /* Receive one byte in interrupt mode */
-    HAL_UART_Receive_IT(&huart2, &byte, 1);
-  }
+  /**USART2 GPIO Configuration
+  PA2     ------> USART2_TX
+  PA3     ------> USART2_RX
+  */
+  GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
+
+void uart_init()
+{
+  __USART2_CLK_ENABLE();
+
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  HAL_UART_Init(&huart2);
+
+  /* Peripheral interrupt init*/
+  HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(USART2_IRQn);
+}
+
+motor_Context motorD, motorG;
+odometry_Context odometry;
+pid_Context pidD, pidG;
+float distBetweenMotorWheels;
+differential_Context differentiel;
+motionControl_Context motionController;
+diffDriveRobot_Context robot;
+gcodeCommand_context gcodeCommand;
+
+/* Single byte to store input */
+
+/* UART2 Interrupt Service Routine */
+
 
 void debugPrintln(UART_HandleTypeDef *huart, char _out[]){
 	HAL_UART_Transmit(huart, (uint8_t *) _out, strlen(_out), 10);
@@ -156,7 +221,8 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  uart_gpio_init();
+  uart_init();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -168,6 +234,8 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "UART_OK\r\n"), 90000); //s/ @suppress("Float formatting support")
+
     setup();
 	HAL_UART_Receive_IT(&huart2, &byte, 1);
   /* USER CODE END 2 */
@@ -190,13 +258,13 @@ int main(void)
 			// HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "g: %d | d: %d \r\n",(int)TIM4->CNT, (int)TIM1->CNT ), 5000); //s/ @suppress("Float formatting support")
 
 			  //LinearDist AngularDist
-			// HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "linearDist: %f | angularDist: %f \r\n",odometry.linearDisplacement, odometry.angularDisplacement ), 5000); //s/ @suppress("Float formatting support")
+//			 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "linearDist: %f | angularDist: %f \r\n",odometry.linearDisplacement, odometry.angularDisplacement ), 5000); //s/ @suppress("Float formatting support")
 
 			  // odometry
-			// HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "x: %f y: %f theta: %f\r\n", robot.odometry->position.x, robot.odometry->position.y, robot.odometry->position.theta), 5000); //s/ @suppress("Float formatting support")
+//			 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "x: %f y: %f theta: %f\r\n", robot.odometry->position.x, robot.odometry->position.y, robot.odometry->position.theta), 5000); //s/ @suppress("Float formatting support")
 
 			 // asservissement roues
-			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "mes_g: %f | mes_d: %f | cmd_g: %f | cmd_d: %f | con_g: %f | con_d: %f \r\n", robot.mesureG, robot.mesureD, robot.commandG, robot.commandD, robot.vitG, robot.vitD), 90000); //s/ @suppress("Float formatting support")
+//			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "mes_g: %f | mes_d: %f | cmd_g: %f | cmd_d: %f | con_g: %f | con_d: %f \r\n", robot.mesureG, robot.mesureD, robot.commandG, robot.commandD, robot.vitG, robot.vitD), 90000); //s/ @suppress("Float formatting support")
 
 		}
     /* USER CODE END WHILE */
@@ -511,22 +579,34 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 1 */
 
   /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+//	  huart2.Instance = USART2;
+//	  huart2.Init.BaudRate = 115200;
+//	  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+//	  huart2.Init.StopBits = UART_STOPBITS_1;
+//	  huart2.Init.Parity = UART_PARITY_NONE;
+//	  huart2.Init.Mode = UART_MODE_TX_RX;
+//	  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+//	  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+//	  if (HAL_UART_Init(&huart2) != HAL_OK)
+//	  {
+//	    Error_Handler();
+//	  }
   /* USER CODE BEGIN USART2_Init 2 */
+	  __USART2_CLK_ENABLE();
 
+	  huart2.Instance = USART2;
+	  huart2.Init.BaudRate = 115200;
+	  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+	  huart2.Init.StopBits = UART_STOPBITS_1;
+	  huart2.Init.Parity = UART_PARITY_NONE;
+	  huart2.Init.Mode = UART_MODE_TX_RX;
+	  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+	  HAL_UART_Init(&huart2);
+
+	  /* Peripheral interrupt init*/
+	  HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
+	  HAL_NVIC_EnableIRQ(USART2_IRQn);
   /* USER CODE END USART2_Init 2 */
 
 }
@@ -571,68 +651,108 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(MotA_Brake_GPIO_Port, &GPIO_InitStruct);
 
+  __GPIOA_CLK_ENABLE();
+
+  /**USART2 GPIO Configuration
+  PA2     ------> USART2_TX
+  PA3     ------> USART2_RX
+  */
+  GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
 /* USER CODE BEGIN 4 */
 void setup(){
-motorD.timer	 		= htim3;
-motorD.channel	 	= TIM_CHANNEL_2;
-motorD.motDir_Port	= MotB_Dir_GPIO_Port;
-motorD.motDir_Pin	 	= MotB_Dir_Pin;
-motorD.motBrake_Port	= MotB_Brake_GPIO_Port;
-motorD.motBrake_Pin	= MotB_Brake_Pin;
-motorD.reverseDir	 	= false;
-motorD.maxPWM = 255;
+    motorD.timer	 		= htim3;
+    motorD.channel	 	= TIM_CHANNEL_2;
+    motorD.motDir_Port	= MotB_Dir_GPIO_Port;
+    motorD.motDir_Pin	 	= MotB_Dir_Pin;
+    motorD.motBrake_Port	= MotB_Brake_GPIO_Port;
+    motorD.motBrake_Pin	= MotB_Brake_Pin;
+    motorD.reverseDir	 	= false;
+    motorD.maxPWM = 255;
 
-motorG.timer	 		= htim2;
-motorG.channel	 	= TIM_CHANNEL_2;
-motorG.motDir_Port	= MotA_Dir_GPIO_Port;
-motorG.motDir_Pin	 	= MotA_Dir_Pin;
-motorG.motBrake_Port	= MotA_Brake_GPIO_Port;
-motorG.motBrake_Pin	= MotA_Brake_Pin;
-motorG.reverseDir	 	= true;
-motorG.maxPWM = 255;
+    motorG.timer	 		= htim2;
+    motorG.channel	 	= TIM_CHANNEL_2;
+    motorG.motDir_Port	= MotA_Dir_GPIO_Port;
+    motorG.motDir_Pin	 	= MotA_Dir_Pin;
+    motorG.motBrake_Port	= MotA_Brake_GPIO_Port;
+    motorG.motBrake_Pin	= MotA_Brake_Pin;
+    motorG.reverseDir	 	= true;
+    motorG.maxPWM = 255;
 
-odometry.rightTicks = (int16_t*)&TIM4->CNT; // cast uint vers int
-odometry.leftTicks =  (int16_t*)&TIM1->CNT;
-odometry.encoderRes = 				480; // tick/tour
-odometry.wheelRadiusR = 			64.8/2.;
-odometry.wheelRadiusL = 			64.8/2.;
-odometry.distanceBetweenWheels = 	210.;
+    odometry.rightTicks = (int16_t*)&TIM4->CNT; // cast uint vers int
+    odometry.leftTicks =  (int16_t*)&TIM1->CNT;
+    odometry.encoderRes = 				480; // tick/tour
+    odometry.wheelRadiusR = 			64.8/2.;
+    odometry.wheelRadiusL = 			64.8/2.;
+    odometry.distanceBetweenWheels = 	210.;
 
-pidD.Kp			= 0.162;
-pidD.Ti			= 0.024;
-pidD.Td			= 0.006;
-pidD.minOut		= -255;
-pidD.maxOut		= 255;
+    pidD.Kp			= 0.162;
+    pidD.Ti			= 0.024;
+    pidD.Td			= 0.006;
+    pidD.minOut		= -255;
+    pidD.maxOut		= 255;
 
-pidG.Kp			= 0.162;
-pidG.Ti			= 0.024;
-pidG.Td			= 0.006;
-pidG.minOut		= -255;
-pidG.maxOut		= 255;
+    pidG.Kp			= 0.162;
+    pidG.Ti			= 0.024;
+    pidG.Td			= 0.006;
+    pidG.minOut		= -255;
+    pidG.maxOut		= 255;
 
-distBetweenMotorWheels = 180.;// mm
+    distBetweenMotorWheels = 180.;// mm
 
-differentiel.distanceBetweenWheels	= distBetweenMotorWheels;
-differentiel.maxLinearVelocity	 	= 450.; // mm.s^-1
-differentiel.maxAngularVelocity	 	= 5.55; // rad.s^-1
+    differentiel.distanceBetweenWheels	= distBetweenMotorWheels;
+    differentiel.maxLinearVelocity	 	= 450.; // mm.s^-1
+    differentiel.maxAngularVelocity	 	= 5.55; // rad.s^-1
 
-motionController.maxLinearAcceleration = 	100;
-motionController.maxLinearVelocity = 		450;
-motionController.maxAngularAcceleration = 	100;
-motionController.maxAngularVelocity = 		5.5;
-motionController.Krho = 					3.;
-motionController.Kalpha = 					12.;
+    motionController.maxLinearAcceleration = 	100;
+    motionController.maxLinearVelocity = 		450;
+    motionController.maxAngularAcceleration = 	100;
+    motionController.maxAngularVelocity = 		5.5;
+    motionController.Krho = 					3.;
+    motionController.Kalpha = 					12.;
 
-robot.odometry = &odometry;
-robot.differential = &differentiel;
-robot.motionController = &motionController;
-robot.motorD = &motorD;
-robot.motorG = &motorG;
-robot.pidD = &pidD;
-robot.pidG = &pidG;
-robot.distBetweenMotorWheels = distBetweenMotorWheels;
+    robot.odometry = &odometry;
+    robot.differential = &differentiel;
+    robot.motionController = &motionController;
+    robot.motorD = &motorD;
+    robot.motorG = &motorG;
+    robot.pidD = &pidD;
+    robot.pidG = &pidG;
+    robot.distBetweenMotorWheels = distBetweenMotorWheels;
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART2)
+  {
+	   *c = byte;
+	    c = c+1;
+
+    	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "%d", strlen(command)), 90000);
+
+//	    if ((int)(c-command[0]) >= 190){
+//	        // error, command cannot be longer than 190 char.
+//	    }else
+	    if (byte == '\n'){ // ou fin de chaine
+	        if (gcode_parseAscii(&gcodeCommand, command)){
+	            peekCommand(&gcodeCommand, &robot);
+	        	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, command), 90000);
+
+	            c = command;
+	        }
+	        else {
+	            // error in command
+	        }
+	    }
+	    /* Receive one byte in interrupt mode */
+	    HAL_UART_Receive_IT(&huart2, &byte, 1);
+  }
 }
 /* USER CODE END 4 */
 

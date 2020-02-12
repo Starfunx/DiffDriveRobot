@@ -1,0 +1,3 @@
+motionControl.c:3:6:motionControl_init	24	static
+motionControl.c:9:6:motionControl_update	48	static
+motionControl.c:22:6:motionControl_setConsign	24	static

@@ -33,7 +33,9 @@ Src/main.o: ../Src/main.c ../Inc/main.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim_ex.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart_ex.h \
- ../Inc/motor.h ../Inc/odometry.h
+ ../Inc/robot.h ../Inc/odometry.h ../Inc/utils.h ../Inc/motionControl.h \
+ ../Inc/differentialDrive.h ../Inc/pid.h ../Inc/motor.h ../Inc/gcode.h \
+ ../Inc/command.h ../Inc/gcode.h ../Inc/robot.h
 
 ../Inc/main.h:
 
@@ -105,6 +107,24 @@ Src/main.o: ../Src/main.c ../Inc/main.h \
 
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart_ex.h:
 
-../Inc/motor.h:
+../Inc/robot.h:
 
 ../Inc/odometry.h:
+
+../Inc/utils.h:
+
+../Inc/motionControl.h:
+
+../Inc/differentialDrive.h:
+
+../Inc/pid.h:
+
+../Inc/motor.h:
+
+../Inc/gcode.h:
+
+../Inc/command.h:
+
+../Inc/gcode.h:
+
+../Inc/robot.h:

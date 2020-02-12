@@ -178,6 +178,118 @@ bool gcode_parseAscii(gcodeCommand_context* gcodeCommand, char *line)
 }
 
 
+
+bool hasM(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 2)!=0);
+}
+bool hasN(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 1)!=0);
+}
+bool hasG(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 4)!=0);
+}
+bool hasX(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 8)!=0);
+}
+bool hasY(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 16)!=0);
+}
+bool hasZ(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 32)!=0);
+}
+bool hasNoXYZ(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 56)==0);
+}
+bool hasE(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 64)!=0);
+}
+bool hasF(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 256)!=0);
+}
+bool hasT(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 512)!=0);
+}
+bool hasS(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 1024)!=0);
+}
+bool hasP(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 2048)!=0);
+}
+bool hasString(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params & 32768)!=0);
+}
+bool hasI(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params2 & 1)!=0);
+}
+bool hasJ(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params2 & 2)!=0);
+}
+bool hasR(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params2 & 4)!=0);
+}
+bool hasD(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params2 & 8)!=0);
+}
+bool hasC(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params2 & 16)!=0);
+}
+bool hasH(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params2 & 32)!=0);
+}
+bool hasA(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params2 & 64)!=0);
+}
+bool hasB(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params2 & 128)!=0);
+}
+bool hasK(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params2 & 256)!=0);
+}
+bool hasL(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params2 & 512)!=0);
+}
+bool hasO(gcodeCommand_context* gcodeCommand)
+{
+    return ((gcodeCommand->params2 & 1024)!=0);
+}
+
+long getS(gcodeCommand_context* gcodeCommand, long def)
+{
+    return (hasS(gcodeCommand) ? gcodeCommand->S : def);
+}
+long getP(gcodeCommand_context* gcodeCommand, long def)
+{
+    return (hasP(gcodeCommand) ? gcodeCommand->P : def);
+}
+
+void setFormatError(gcodeCommand_context* gcodeCommand) {
+    gcodeCommand->params2 |= 32768;
+}
+
+
 float parseFloatValue(char *s)
 {
     char *endPtr;

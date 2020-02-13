@@ -12,6 +12,8 @@ typedef struct {
     float maxAngularVelocity;
     float Krho;
     float Kalpha;
+    float Srho;
+    float Salpha;
 
     float alpha;
     float rho;
@@ -20,6 +22,8 @@ typedef struct {
 void motionControl_init(motionControl_Context *motionController, float xc, float yc, float thetac);
 void motionControl_update(motionControl_Context* motionController, _position robotPos,
     float* LinearVelocity, float* AngularVelocity);
+void motionControl_setConsign(motionControl_Context* motionController,
+    float x, float y, float theta);
 void motionControl_setConsign(motionControl_Context* motionController,
     float x, float y, float theta);
 

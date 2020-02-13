@@ -18,7 +18,7 @@ typedef struct {
     float E; ///< G-code E value if set
     float F; ///< G-code F value if set
     int32_t S; ///< G-code S value if set
-    int32_t P; ///< G-code P value if set
+    float P; ///< G-code P value if set
     float I; ///< G-code I value if set
     float J; ///< G-code J value if set
     float R; ///< G-code R value if set

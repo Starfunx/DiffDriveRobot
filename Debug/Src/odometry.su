@@ -1,2 +1,2 @@
-odometry.c:3:6:odometry_init	24	static
+odometry.c:3:6:odometry_init	32	static
 odometry.c:12:6:odometry_update	40	static

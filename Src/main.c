@@ -716,6 +716,8 @@ void setup(){
     motionController.maxAngularVelocity = 		5.5;
     motionController.Krho = 					3.;
     motionController.Kalpha = 					12.;
+    motionController.Srho =                     3;
+    motionController.Salpha =                   2*180/PI;
 
     robot.odometry = &odometry;
     robot.differential = &differentiel;
@@ -731,24 +733,32 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if (huart->Instance == USART2)
   {
+	  static int pos;
+
+	  if (!pos)
+		  pos = 1;
 	   *c = byte;
 	    c = c+1;
+	    pos++;
 
-    	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "%d", strlen(command)), 90000);
+//    	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, "%d", strlen(command)), 90000);
 
-//	    if ((int)(c-command[0]) >= 190){
-//	        // error, command cannot be longer than 190 char.
-//	    }else
+	    if (pos >= 190)//(int)(c-command) >= 190){
+	    {
+	    	c = command;// error, command cannot be longer than 190 char.
+	    	pos = 0;
+	    }else
 	    if (byte == '\n'){ // ou fin de chaine
+            *c = '\0';
 	        if (gcode_parseAscii(&gcodeCommand, command)){
-	            peekCommand(&gcodeCommand, &robot);
-	        	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, command), 90000);
-
-	            c = command;
+	            peekCommand(&gcodeCommand, &robot, huart);
+	        	// HAL_UART_Transmit(&huart2, (uint8_t*)buffer, sprintf(buffer, command), 90000);
 	        }
 	        else {
 	            // error in command
-	        }
+            }
+            c = command;
+            pos = 0;
 	    }
 	    /* Receive one byte in interrupt mode */
 	    HAL_UART_Receive_IT(&huart2, &byte, 1);

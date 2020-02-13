@@ -85,7 +85,7 @@ bool gcode_parseAscii(gcodeCommand_context* gcodeCommand, char *line)
         case 'P':
         case 'p':
         {
-            gcodeCommand->P = parseLongValue(pos);
+            gcodeCommand->P = parseFloatValue(pos);
             gcodeCommand->params |= 2048;
             break;
         }

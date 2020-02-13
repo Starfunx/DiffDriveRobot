@@ -6,7 +6,7 @@ void odometry_init(odometry_Context *odometry, float x0, float y0, float theta0)
 
     odometry->position.x     = x0;
     odometry->position.y     = y0;
-    odometry->position.theta = theta0;
+    odometry->position.theta = constrainAngle(theta0); // remise dans ]-pi pi]
 }
 
 void odometry_update(odometry_Context *odometry){

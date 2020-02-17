@@ -29,6 +29,7 @@
 "Src/odometry.o"
 "Src/pid.o"
 "Src/robot.o"
+"Src/rst.o"
 "Src/stm32l4xx_hal_msp.o"
 "Src/stm32l4xx_it.o"
 "Src/system_stm32l4xx.o"

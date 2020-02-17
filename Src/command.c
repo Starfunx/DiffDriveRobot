@@ -3,7 +3,7 @@
 
 void peekCommand(gcodeCommand_context* command, diffDriveRobot_Context* robot, UART_HandleTypeDef *huart){
     if (hasM(command)) {
-        float Kp,Ti,Td;
+        float Kp,Ti,Td, d;
         switch (command->M)
         {
             case 18:
@@ -35,6 +35,30 @@ void peekCommand(gcodeCommand_context* command, diffDriveRobot_Context* robot, U
                 else Td = 0.;
                 setPID_G(robot, Kp, Ti, Td);
                 break;
+            case 313:
+                if (hasD(command)){
+                     d = command->D;
+                     setLOdomWheelDia(robot, d);
+                 }
+            break;
+            case 314:
+                if (hasD(command)){
+                     d = command->D;
+                     setROdomWheelDia(robot, d);
+                 }
+            break;
+            case 315:
+                if (hasD(command)){
+                     d = command->D;
+                     setOdomInnerDist(robot, d);
+                 }
+            break;
+            case 316:
+                if (hasD(command)){
+                     d = command->D;
+                     setMotorInnerDist(robot, d);
+                 }
+            break;
             case 666:
                 printComTest(huart);
                 break;
@@ -63,8 +87,28 @@ void peekCommand(gcodeCommand_context* command, diffDriveRobot_Context* robot, U
                 thetac = robot->odometry->position.theta; // ne pas faire ça en vrai
                 if (hasX(command)) xc = command->X;
                 if (hasY(command)) yc = command->Y;
-                if (hasA(command)) thetac = command->A;
-                fastMove(robot, xc, yc, thetac);
+                if (hasA(command)){
+                    thetac = command->A;
+                    fastMoveTheta(robot, xc, yc, thetac);
+                }
+                else {
+                    fastMove(robot, xc, yc);
+                }
+                break;
+            case 1: // fast move
+            	;
+                xc = robot->odometry->position.x;
+                yc = robot->odometry->position.y;
+                thetac = robot->odometry->position.theta; // ne pas faire ça en vrai
+                if (hasX(command)) xc = command->X;
+                if (hasY(command)) yc = command->Y;
+                if (hasA(command)){
+                    thetac = command->A;
+                    linearMoveTheta(robot, xc, yc, thetac);
+                }
+                else {
+                    linearMove(robot, xc, yc);
+                }
                 break;
             case 92:
             	;
@@ -76,6 +120,7 @@ void peekCommand(gcodeCommand_context* command, diffDriveRobot_Context* robot, U
                 if (hasY(command)) y = command->Y;
                 if (hasA(command)) theta = command->A;
                 setPosition(robot, x, y, theta);
+                linearMoveTheta(robot, x, y, theta);
                 break;
 
             default:
@@ -88,19 +133,29 @@ void peekCommand(gcodeCommand_context* command, diffDriveRobot_Context* robot, U
 void fastMove(diffDriveRobot_Context* robot, float xc, float yc){
     robot->motionController->consign.x = xc;
     robot->motionController->consign.y = yc;
-    robot->motionController->consign.theta = thetac;
+    robot->motionController->consign.theta = atan2(yc - robot->odometry->position.y, xc - robot->odometry->position.x);
+    robot->mode = 0;
 }
 
 void fastMoveTheta(diffDriveRobot_Context* robot, float xc, float yc, float thetac){
-
+    robot->motionController->consign.x = xc;
+    robot->motionController->consign.y = yc;
+    robot->motionController->consign.theta = thetac;
+    robot->mode = 0;
 }
 
-void LinearMove(diffDriveRobot_Context* robot, float xc, float yc){
-
+void linearMove(diffDriveRobot_Context* robot, float xc, float yc){
+    robot->motionController->consign.x = xc;
+    robot->motionController->consign.y = yc;
+    robot->motionController->consign.theta = atan2(yc - robot->odometry->position.y, xc - robot->odometry->position.x);
+    robot->mode = 1;
 }
 
-void LinearMoveTheta(diffDriveRobot_Context* robot, float xc, float yc, float thetac){
-
+void linearMoveTheta(diffDriveRobot_Context* robot, float xc, float yc, float thetac){
+    robot->motionController->consign.x = xc;
+    robot->motionController->consign.y = yc;
+    robot->motionController->consign.theta = thetac;
+    robot->mode = 1;
 }
 
 
@@ -150,3 +205,38 @@ void setPID_G(diffDriveRobot_Context* robot, float Kp, float Ti, float Td){
     robot->pidG->Kp = Ti;
     robot->pidG->Kp = Td;
 }
+
+void setLOdomWheelDia(diffDriveRobot_Context* robot, float wheelDiameter) {
+    robot->odometry->wheelRadiusR = wheelDiameter/2;
+}
+
+void setROdomWheelDia(diffDriveRobot_Context* robot, float wheelDiameter) {
+    robot->odometry->wheelRadiusR = wheelDiameter/2;
+}
+
+void setOdomInnerDist(diffDriveRobot_Context* robot, float innerDist) {
+    robot->odometry->distanceBetweenWheels = innerDist;
+}
+
+void setMotorInnerDist(diffDriveRobot_Context* robot, float innerDist) {
+    robot->distBetweenMotorWheels = innerDist;
+    robot->differential->distanceBetweenWheels = innerDist;
+
+}
+
+
+void setRobotSpeeds(diffDriveRobot_Context* robot, float linearSpeed, float angularSpeed){
+    robot->mode = 20;
+    robot->linearVelocity = linearSpeed;
+    robot->angularVelocity = angularSpeed;
+}
+
+void setWheelsSpeeds(diffDriveRobot_Context* robot, float rightWheelSpeed, float leftWheelSpeed){
+    robot->mode = 21;
+    robot->vitD = rightWheelSpeed;
+    robot->vitG = leftWheelSpeed;
+}
+
+
+
+//

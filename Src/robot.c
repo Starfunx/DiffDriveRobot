@@ -30,10 +30,22 @@ void robot_update(diffDriveRobot_Context *robot, float dt){
       robot->mesureG = (robot->odometry->linearDisplacement - wheelDistAng)/dt*1000;
 
     // mise a jour de la consigne en vitesse et vitese angulaire.
-      motionControl_update(robot->motionController, robot->odometry->position, &(robot->linearVelocity), &(robot->angularVelocity));
+    if (robot->mode == 0){
+        motionControl_update(robot->motionController, robot->odometry->position, &(robot->linearVelocity), &(robot->angularVelocity));
+      // Conversion consignes vitesses et vitesses angulaires en vitesses roues gauche et droite et controle qu'on soit dans le carre des vitesses
+        differential_update(robot->differential, robot->linearVelocity, robot->angularVelocity, &(robot->vitD), &(robot->vitG));
 
-    // Conversion consignes vitesses et vitesses angulaires en vitesses roues gauche et droite et controle qu'on soit dans le carre des vitesses
-      differential_update(robot->differential, robot->linearVelocity, robot->angularVelocity, &(robot->vitD), &(robot->vitG));
+    }
+    else if(robot->mode == 1){
+        motionControl_update2(robot->motionController, robot->odometry->position, &(robot->linearVelocity), &(robot->angularVelocity));
+      // Conversion consignes vitesses et vitesses angulaires en vitesses roues gauche et droite et controle qu'on soit dans le carre des vitesses
+        differential_update(robot->differential, robot->linearVelocity, robot->angularVelocity, &(robot->vitD), &(robot->vitG));
+
+    }
+    if (robot->mode == 20){
+      // Conversion consignes vitesses et vitesses angulaires en vitesses roues gauche et droite et controle qu'on soit dans le carre des vitesses
+        differential_update(robot->differential, robot->linearVelocity, robot->angularVelocity, &(robot->vitD), &(robot->vitG));
+    }
 
     // calcul de la commande moteurs Corrigee par des pid.
       robot->commandD = pid_update(robot->pidD, robot->vitD, robot->mesureD);

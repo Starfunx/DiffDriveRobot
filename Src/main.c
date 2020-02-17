@@ -206,7 +206,7 @@ int main(void)
   dtAff = 10;
   tAff = t0 + dtAff;
   /* USER CODE END 1 */
-
+  
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -284,7 +284,7 @@ void SystemClock_Config(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
-  /** Initializes the CPU, AHB and APB busses clocks
+  /** Initializes the CPU, AHB and APB busses clocks 
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -300,7 +300,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks
+  /** Initializes the CPU, AHB and APB busses clocks 
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -319,7 +319,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Configure the main internal regulator output voltage
+  /** Configure the main internal regulator output voltage 
   */
   if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
   {
@@ -579,18 +579,20 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 1 */
 
   /* USER CODE END USART2_Init 1 */
-//	  huart2.Instance = USART2;
-//	  huart2.Init.BaudRate = 115200;
-//	  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-//	  huart2.Init.StopBits = UART_STOPBITS_1;
-//	  huart2.Init.Parity = UART_PARITY_NONE;
-//	  huart2.Init.Mode = UART_MODE_TX_RX;
-//	  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-//	  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-//	  if (HAL_UART_Init(&huart2) != HAL_OK)
-//	  {
-//	    Error_Handler();
-//	  }
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN USART2_Init 2 */
 	  __USART2_CLK_ENABLE();
 
@@ -631,12 +633,6 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(MotA_Brake_GPIO_Port, MotA_Brake_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : MotA_CurrentSense_Pin MotB_CurrentSense_Pin */
-  GPIO_InitStruct.Pin = MotA_CurrentSense_Pin|MotB_CurrentSense_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /*Configure GPIO pins : MotB_Dir_Pin MotA_Dir_Pin MotB_Brake_Pin */
   GPIO_InitStruct.Pin = MotB_Dir_Pin|MotA_Dir_Pin|MotB_Brake_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -651,18 +647,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(MotA_Brake_GPIO_Port, &GPIO_InitStruct);
 
-  __GPIOA_CLK_ENABLE();
-
-  /**USART2 GPIO Configuration
-  PA2     ------> USART2_TX
-  PA3     ------> USART2_RX
-  */
-  GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
 /* USER CODE BEGIN 4 */
@@ -714,10 +698,11 @@ void setup(){
     motionController.maxLinearVelocity = 		450;
     motionController.maxAngularAcceleration = 	100;
     motionController.maxAngularVelocity = 		5.5;
-    motionController.Krho = 					3.;
-    motionController.Kalpha = 					12.;
-    motionController.Srho =                     3;
-    motionController.Salpha =                   2*180/PI;
+    motionController.Krho = 					0.7;
+    motionController.Kalpha = 					1.5;
+
+    motionController.Srho =                     5;
+    motionController.Salpha =                   2*PI/180;
 
     robot.odometry = &odometry;
     robot.differential = &differentiel;
@@ -727,6 +712,8 @@ void setup(){
     robot.pidD = &pidD;
     robot.pidG = &pidG;
     robot.distBetweenMotorWheels = distBetweenMotorWheels;
+    robot.mode = 0;
+    robot_init(&robot, 0., 0., 0.);
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
@@ -787,7 +774,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(char *file, uint32_t line)
-{
+{ 
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

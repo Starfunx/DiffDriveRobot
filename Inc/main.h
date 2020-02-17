@@ -60,25 +60,18 @@ void setup();
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define MotA_CurrentSense_Pin GPIO_PIN_0  // A0
-#define MotA_CurrentSense_GPIO_Port GPIOA
-#define MotB_CurrentSense_Pin GPIO_PIN_1  // A1
-#define MotB_CurrentSense_GPIO_Port GPIOA
-
-#define MotA_Dir_Pin GPIO_PIN_6           //D12
-#define MotA_Dir_GPIO_Port GPIOA
-#define MotB_Dir_Pin GPIO_PIN_5           //D13
+#define MotB_Dir_Pin GPIO_PIN_5
 #define MotB_Dir_GPIO_Port GPIOA
-
-#define MotA_Brake_Pin GPIO_PIN_7        //D9
-#define MotA_Brake_GPIO_Port GPIOC
-#define MotB_Brake_Pin GPIO_PIN_10       //D2 //pin D8 utilisée par un encodeur
-#define MotB_Brake_GPIO_Port GPIOA
-
-#define MotA_PWM_Pin GPIO_PIN_3         //D3
-#define MotA_PWM_GPIO_Port GPIOB
-#define MotB_PWM_Pin GPIO_PIN_7         //D11
+#define MotA_Dir_Pin GPIO_PIN_6
+#define MotA_Dir_GPIO_Port GPIOA
+#define MotB_PWM_Pin GPIO_PIN_7
 #define MotB_PWM_GPIO_Port GPIOA
+#define MotA_Brake_Pin GPIO_PIN_7
+#define MotA_Brake_GPIO_Port GPIOC
+#define MotB_Brake_Pin GPIO_PIN_10
+#define MotB_Brake_GPIO_Port GPIOA
+#define MotA_PWM_Pin GPIO_PIN_3
+#define MotA_PWM_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

@@ -22,7 +22,7 @@ typedef struct {
 	float linearVelocity, angularVelocity;
 
     int mode;
-    // Deplacement rapide/ linéaire?
+    // Deplacement rapide/ linéaire? mode 2^0 = 0/1
     // sens d'arivÃ© important oui/non?
     // sens d'arrivÃ© 1st devant/derierre?
     // angle final oui/non?

@@ -1,6 +1,8 @@
 motionControl.c:3:6:motionControl_init	24	static
-motionControl.c:9:6:motionControl_update	40	static
-motionControl.c:29:6:motionControl_update2	40	static
-motionControl.c:49:6:motionControl_setConsign	24	static
-motionControl.c:57:6:alphaRho	56	static
-motionControl.c:62:7:ramp_update	48	static
+motionControl.c:10:6:motionControl_update	40	static
+motionControl.c:46:6:motionControl_update0	40	static
+motionControl.c:59:6:motionControl_update1	24	static
+motionControl.c:69:6:motionControl_update2	48	static
+motionControl.c:76:6:motionControl_setConsign	24	static
+motionControl.c:84:6:alphaRho	56	static
+motionControl.c:89:7:ramp_update	48	static

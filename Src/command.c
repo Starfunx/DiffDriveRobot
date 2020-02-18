@@ -129,33 +129,41 @@ void peekCommand(gcodeCommand_context* command, diffDriveRobot_Context* robot, U
     }
 }
 
+/*
+ *  deplacement functions setters
+ */
+
 
 void fastMove(diffDriveRobot_Context* robot, float xc, float yc){
-    robot->motionController->consign.x = xc;
+	robot->controlMode = 0;
+	robot->motionController->consign.x = xc;
     robot->motionController->consign.y = yc;
     robot->motionController->consign.theta = atan2(yc - robot->odometry->position.y, xc - robot->odometry->position.x);
-    robot->mode = 0;
+    robot->motionController->movementMode = 0;
 }
 
 void fastMoveTheta(diffDriveRobot_Context* robot, float xc, float yc, float thetac){
-    robot->motionController->consign.x = xc;
+	robot->controlMode = 0;
+	robot->motionController->consign.x = xc;
     robot->motionController->consign.y = yc;
     robot->motionController->consign.theta = thetac;
-    robot->mode = 0;
+    robot->motionController->movementMode = 0;
 }
 
 void linearMove(diffDriveRobot_Context* robot, float xc, float yc){
-    robot->motionController->consign.x = xc;
+	robot->controlMode = 0;
+	robot->motionController->consign.x = xc;
     robot->motionController->consign.y = yc;
     robot->motionController->consign.theta = atan2(yc - robot->odometry->position.y, xc - robot->odometry->position.x);
-    robot->mode = 1;
+    robot->motionController->movementMode = 1;
 }
 
 void linearMoveTheta(diffDriveRobot_Context* robot, float xc, float yc, float thetac){
+	robot->controlMode = 0;
     robot->motionController->consign.x = xc;
     robot->motionController->consign.y = yc;
     robot->motionController->consign.theta = thetac;
-    robot->mode = 1;
+    robot->motionController->movementMode = 1;
 }
 
 
@@ -171,6 +179,12 @@ void unBreakeMotors(diffDriveRobot_Context* robot){
     pid_init(robot->pidD);
     pid_init(robot->pidG);
 }
+
+
+/*
+ *  Setters
+ */
+
 
 void setPosition(diffDriveRobot_Context* robot, float x, float y, float theta){
     odometry_init(robot->odometry, x, y, theta);
@@ -226,13 +240,13 @@ void setMotorInnerDist(diffDriveRobot_Context* robot, float innerDist) {
 
 
 void setRobotSpeeds(diffDriveRobot_Context* robot, float linearSpeed, float angularSpeed){
-    robot->mode = 20;
+	robot->controlMode = 1;
     robot->linearVelocity = linearSpeed;
     robot->angularVelocity = angularSpeed;
 }
 
 void setWheelsSpeeds(diffDriveRobot_Context* robot, float rightWheelSpeed, float leftWheelSpeed){
-    robot->mode = 21;
+    robot->controlMode = 2;
     robot->vitD = rightWheelSpeed;
     robot->vitG = leftWheelSpeed;
 }

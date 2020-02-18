@@ -206,7 +206,7 @@ int main(void)
   dtAff = 10;
   tAff = t0 + dtAff;
   /* USER CODE END 1 */
-  
+
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -284,7 +284,7 @@ void SystemClock_Config(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -300,7 +300,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -319,7 +319,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Configure the main internal regulator output voltage 
+  /** Configure the main internal regulator output voltage
   */
   if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
   {
@@ -701,8 +701,18 @@ void setup(){
     motionController.Krho = 					0.7;
     motionController.Kalpha = 					1.5;
 
-    motionController.Srho =                     5;
-    motionController.Salpha =                   2*PI/180;
+    motionController.Srho =                     0.5;//mm; cm?
+    motionController.Salpha =                   1*PI/180;
+
+    motionController.rampLin.aFrein =           0.02;
+    motionController.rampLin.aMax =             0.02;
+    motionController.rampLin.vMax =             450;
+    motionController.rampLin.lastPos =          0;
+
+    motionController.rampAng.aFrein =           0.2;
+    motionController.rampAng.aMax =             0.5;
+    motionController.rampAng.vMax =             5.55;
+    motionController.rampAng.lastPos =          0;
 
     robot.odometry = &odometry;
     robot.differential = &differentiel;
@@ -712,8 +722,13 @@ void setup(){
     robot.pidD = &pidD;
     robot.pidG = &pidG;
     robot.distBetweenMotorWheels = distBetweenMotorWheels;
-    robot.mode = 0;
+    robot.controlMode = 0;
+
+
     robot_init(&robot, 0., 0., 0.);
+    motor_breake(&motorD);
+    motor_breake(&motorG);
+
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
@@ -774,7 +789,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(char *file, uint32_t line)
-{ 
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

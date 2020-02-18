@@ -21,13 +21,10 @@ typedef struct {
 	float mesureD, mesureG; // vitesse mesuree du point de contact de la roue et du sol
 	float linearVelocity, angularVelocity;
 
-    int mode;
-    // Deplacement rapide/ linéaire? mode 2^0 = 0/1
-    // sens d'arivÃ© important oui/non?
-    // sens d'arrivÃ© 1st devant/derierre?
-    // angle final oui/non?
-
-    // position d'asservissemnt ? (impact sur les parametres prÃ©cedents??)
+    int controlMode;
+    // 0: consigne position pour le deplacement dégradé avec motion controller et ses différents modes
+    // 1: consigne vitesses et vitesses angulaires
+    // 2: consigne vitesse roue gauche, vitesse roue droite
 
 }diffDriveRobot_Context;
 

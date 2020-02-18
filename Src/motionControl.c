@@ -6,44 +6,71 @@ void motionControl_init(motionControl_Context *motionController, float xc, float
     motionController->consign.theta = thetac;
 }
 
-void motionControl_update(motionControl_Context* motionController, _position robotPos, float* linearVelocity, float* angularVelocity){
 
+void motionControl_update(motionControl_Context* motionController, _position robotPos, float* linearVelocity, float* angularVelocity, float dt){
     alphaRho(motionController->consign, robotPos, &motionController->alpha, &motionController->rho);
 
-    *linearVelocity = motionController->Krho * motionController->rho * cos(motionController->alpha);
-    *angularVelocity = motionController->Kalpha * sin(motionController->alpha);
-
-    if (motionController->rho < motionController->Srho){
-        *angularVelocity = motionController->Kalpha * (motionController->consign.theta - robotPos.theta);
+    if (motionController->movementMode == 0){
+        motionControl_update0(motionController, linearVelocity, angularVelocity, dt);
+        // critère d'arrêt
+        if (motionController->alpha > -motionController->Salpha && motionController->alpha < motionController->Salpha
+            && motionController->rho < motionController->Srho){
+            *linearVelocity = 0.;
+            *angularVelocity = 0.;
+        }
+    }
+    else if(motionController->movementMode == 1){
+        motionControl_update1(motionController, linearVelocity, angularVelocity, dt);
+        // critère d'arrêt
+        if (motionController->alpha > -motionController->Salpha && motionController->alpha < motionController->Salpha
+            && motionController->rho < motionController->Srho){
+            *linearVelocity = 0.;
+            *angularVelocity = 0.;
+        }
+    }
+    else if(motionController->movementMode == 2){
+        motionControl_update2(motionController, robotPos, linearVelocity, angularVelocity, dt);
+        // critère d'arrêt
+        if ( (motionController->consign.theta - robotPos.theta) < motionController->Salpha){
+            *linearVelocity = 0.;
+            *angularVelocity = 0.;
+        }
     }
 
-    // critère d'arrêt
-    if (fabs(motionController->alpha) < motionController->Salpha &&
-        motionController->rho < motionController->Srho){
+    if (motionController->rho < motionController->Srho){
+        motionController->movementMode = 2;
+    }
+
+}
+
+void motionControl_update0(motionControl_Context* motionController, float* linearVelocity, float* angularVelocity, float dt){
+    // *linearVelocity = motionController->Krho * motionController->rho * cos(motionController->alpha);
+    *linearVelocity = ramp_update(&motionController->rampLin, motionController->rho*cos(motionController->alpha), dt);
+    *angularVelocity = motionController->Kalpha * sin(motionController->alpha);
+    // *angularVelocity = ramp_update(&motionController->rampAng, motionController->alpha*sin(motionController->alpha), dt);
+
+    if (motionController->rho < motionController->Srho){
         *linearVelocity = 0.;
         *angularVelocity = 0.;
     }
 }
 
 // motion control with rotations firsts
-void motionControl_update2(motionControl_Context* motionController, _position robotPos, float* linearVelocity, float* angularVelocity){
-
-    alphaRho(motionController->consign, robotPos, &motionController->alpha, &motionController->rho);
-
-    *linearVelocity = motionController->Krho * motionController->rho * cos(motionController->alpha);
-    *angularVelocity = motionController->Kalpha * motionController->alpha;
-    if (motionController->alpha > motionController->Salpha){
+void motionControl_update1(motionControl_Context* motionController, float* linearVelocity, float* angularVelocity, float dt){
+    if (fabs(motionController->alpha) > motionController->Salpha){
         *linearVelocity = 0.;
-        *angularVelocity = motionController->Kalpha * motionController->alpha ;
+        *angularVelocity = motionController->Kalpha * motionController->alpha;
     }
+    else {
+        motionController->movementMode = 0;
+    }
+}
 
-    // critère d'arrêt
-    if (fabs(motionController->alpha) < motionController->Salpha &&
-        motionController->rho < motionController->Srho){
+void motionControl_update2(motionControl_Context* motionController, _position robotPos, float* linearVelocity, float* angularVelocity, float dt){
+    if (fabs(motionController->alpha) > motionController->Salpha){
         *linearVelocity = 0.;
-        *angularVelocity = 0.;
+        *angularVelocity = motionController->Kalpha * constrainAngle(motionController->consign.theta - robotPos.theta);
     }
-
 }
 
 void motionControl_setConsign(motionControl_Context* motionController,
@@ -60,7 +87,6 @@ void alphaRho(_position consign, _position robotPos, float* alpha, float* rho){
 }
 
 float ramp_update(ramp_Context* ramp, float pos, float dt){
-
    float speed = pos - ramp->lastPos;
    float dFrein = pow(speed,2)/(2*ramp->aFrein);
    if (pos < dFrein){

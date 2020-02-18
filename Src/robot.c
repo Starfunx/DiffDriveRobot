@@ -17,7 +17,7 @@ void robot_init(diffDriveRobot_Context *robot, float x0, float y0, float theta0)
     robot->linearVelocity = 0.;
     robot->angularVelocity = 0.;
 
-    robot->mode = 0;
+    robot->controlMode = 0;
 }
 
 void robot_update(diffDriveRobot_Context *robot, float dt){
@@ -29,22 +29,24 @@ void robot_update(diffDriveRobot_Context *robot, float dt){
       robot->mesureD = (robot->odometry->linearDisplacement + wheelDistAng)/dt*1000;
       robot->mesureG = (robot->odometry->linearDisplacement - wheelDistAng)/dt*1000;
 
-    // mise a jour de la consigne en vitesse et vitese angulaire.
-    if (robot->mode == 0){
-        motionControl_update(robot->motionController, robot->odometry->position, &(robot->linearVelocity), &(robot->angularVelocity));
+
+      // ??? avec un swich case sans break ça marcherai aussi en dessous et ça eviterai de répeter des bouts de code.
+    if (robot->controlMode == 0){
+      // mise a jour de la consigne en vitesse et vitese angulaire.
+        motionControl_update(robot->motionController, robot->odometry->position, &(robot->linearVelocity), &(robot->angularVelocity), dt);
       // Conversion consignes vitesses et vitesses angulaires en vitesses roues gauche et droite et controle qu'on soit dans le carre des vitesses
         differential_update(robot->differential, robot->linearVelocity, robot->angularVelocity, &(robot->vitD), &(robot->vitG));
 
     }
-    else if(robot->mode == 1){
-        motionControl_update2(robot->motionController, robot->odometry->position, &(robot->linearVelocity), &(robot->angularVelocity));
+    else if(robot->controlMode == 1){
+      // on ne met pas a jour le motion controller car on commande en vitesse et vitesse angulaire et on ne veut pas ecraser celles ci en mettant a jour le motion conteller
       // Conversion consignes vitesses et vitesses angulaires en vitesses roues gauche et droite et controle qu'on soit dans le carre des vitesses
         differential_update(robot->differential, robot->linearVelocity, robot->angularVelocity, &(robot->vitD), &(robot->vitG));
 
     }
-    if (robot->mode == 20){
-      // Conversion consignes vitesses et vitesses angulaires en vitesses roues gauche et droite et controle qu'on soit dans le carre des vitesses
-        differential_update(robot->differential, robot->linearVelocity, robot->angularVelocity, &(robot->vitD), &(robot->vitG));
+    else if (robot->controlMode == 2){
+        // on ne met par a jour les vitesses et vitesses angulaire car on controle les vitesses moteurs
+        // et que les mettre a jour ecraserai la consigne moteur
     }
 
     // calcul de la commande moteurs Corrigee par des pid.

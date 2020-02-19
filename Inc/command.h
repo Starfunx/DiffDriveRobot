@@ -24,6 +24,8 @@ void unBreakeMotors(diffDriveRobot_Context* robot);
 
 // getters
 void printPosition(diffDriveRobot_Context* robot, UART_HandleTypeDef *huart);
+void printRspeed(diffDriveRobot_Context* robot, UART_HandleTypeDef *huart);
+void printLspeed(diffDriveRobot_Context* robot, UART_HandleTypeDef *huart);
 void printComTest(UART_HandleTypeDef *huart);
 void printSelf(UART_HandleTypeDef *huart);
 

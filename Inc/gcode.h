@@ -9,7 +9,7 @@ typedef struct {
     uint16_t params;
     uint16_t params2;
 
-    uint16_t N; ///< Line number reduced to 16 bit
+    uint16_t N; ///< G-code N value if set
     uint16_t M; ///< G-code M value if set
     uint16_t G; ///< G-code G value if set
     float X; ///< G-code X value if set

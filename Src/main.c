@@ -694,11 +694,7 @@ void setup(){
     differentiel.maxLinearVelocity	 	= 450.; // mm.s^-1
     differentiel.maxAngularVelocity	 	= 5.55; // rad.s^-1
 
-    motionController.maxLinearAcceleration = 	100;
-    motionController.maxLinearVelocity = 		450;
-    motionController.maxAngularAcceleration = 	100;
-    motionController.maxAngularVelocity = 		5.5;
-    motionController.Krho = 					0.7;
+    motionController.Krho = 					0.6;
     motionController.Kalpha = 					1.5;
 
     motionController.Srho =                     0.5;//mm; cm?

@@ -13,10 +13,6 @@ typedef struct{
 
 typedef struct {
     _position consign;
-    float maxLinearAcceleration;
-    float maxLinearVelocity;
-    float maxAngularAcceleration;
-    float maxAngularVelocity;
     float Krho;
     float Kalpha;
     float Srho;

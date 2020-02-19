@@ -9,7 +9,6 @@ void motionControl_init(motionControl_Context *motionController, float xc, float
 
 void motionControl_update(motionControl_Context* motionController, _position robotPos, float* linearVelocity, float* angularVelocity, float dt){
     alphaRho(motionController->consign, robotPos, &motionController->alpha, &motionController->rho);
-
     if (motionController->movementMode == 0){
         motionControl_update0(motionController, linearVelocity, angularVelocity, dt);
         // critère d'arrêt
@@ -29,11 +28,14 @@ void motionControl_update(motionControl_Context* motionController, _position rob
         }
     }
     else if(motionController->movementMode == 2){
-        motionControl_update2(motionController, robotPos, linearVelocity, angularVelocity, dt);
+
         // critère d'arrêt
-        if ( (motionController->consign.theta - robotPos.theta) < motionController->Salpha){
+        if ( fabs(motionController->consign.theta - robotPos.theta) < motionController->Salpha){
             *linearVelocity = 0.;
             *angularVelocity = 0.;
+        }
+        else {
+            motionControl_update2(motionController, robotPos, linearVelocity, angularVelocity, dt);
         }
     }
 

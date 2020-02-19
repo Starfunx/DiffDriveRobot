@@ -33,7 +33,7 @@ void robot_update(diffDriveRobot_Context *robot, float dt){
       // ??? avec un swich case sans break ça marcherai aussi en dessous et ça eviterai de répeter des bouts de code.
     if (robot->controlMode == 0){
       // mise a jour de la consigne en vitesse et vitese angulaire.
-        motionControl_update(robot->motionController, robot->odometry->position, &(robot->linearVelocity), &(robot->angularVelocity), dt);
+        motionControl_update(robot->motionController, robot->odometry->position, &(robot->linearVelocity), &(robot->angularVelocity), dt/1000);
       // Conversion consignes vitesses et vitesses angulaires en vitesses roues gauche et droite et controle qu'on soit dans le carre des vitesses
         differential_update(robot->differential, robot->linearVelocity, robot->angularVelocity, &(robot->vitD), &(robot->vitG));
 

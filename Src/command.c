@@ -15,6 +15,12 @@ void peekCommand(gcodeCommand_context* command, diffDriveRobot_Context* robot, U
             case 114:
                 printPosition(robot, huart);
                 break;
+            case 115:
+                printRspeed(robot, huart);
+                break;
+            case 116:
+                printLspeed(robot, huart);
+                break;
             case 301:
                 ;
                 if (hasP(command)) Kp = command->P;
@@ -35,28 +41,90 @@ void peekCommand(gcodeCommand_context* command, diffDriveRobot_Context* robot, U
                 else Td = 0.;
                 setPID_G(robot, Kp, Ti, Td);
                 break;
-            case 313:
-                if (hasD(command)){
-                     d = command->D;
-                     setLOdomWheelDia(robot, d);
-                 }
-            break;
-            case 314:
+            case 311:
                 if (hasD(command)){
                      d = command->D;
                      setROdomWheelDia(robot, d);
                  }
             break;
-            case 315:
+            case 312:
+                if (hasD(command)){
+                     d = command->D;
+                     setLOdomWheelDia(robot, d);
+                 }
+            break;
+            case 313:
                 if (hasD(command)){
                      d = command->D;
                      setOdomInnerDist(robot, d);
                  }
             break;
-            case 316:
+            case 314:
                 if (hasD(command)){
                      d = command->D;
                      setMotorInnerDist(robot, d);
+                 }
+            break;
+            case 321:
+                if (hasD(command)){
+                     d = command->D;
+                     robot->motionController->Srho = d;
+                 }
+            break;
+            case 322:
+                if (hasD(command)){
+                     d = command->D;
+                     robot->motionController->Salpha = d;
+                 }
+            break;
+            case 323:
+                if (hasD(command)){
+                     d = command->D;
+                     robot->motionController->Krho = d;
+                 }
+            break;
+            case 324:
+                if (hasD(command)){
+                     d = command->D;
+                     robot->motionController->Kalpha = d;
+                 }
+            break;
+            case 331: // set max linear speed
+                if (hasD(command)){
+                     d = command->D;
+                     robot->differential->maxLinearVelocity     = d;
+                     robot->motionController->rampLin.vMax      = d;
+                 }
+            break;
+            case 332: // set max angular speed
+                if (hasD(command)){
+                     d = command->D;
+                     robot->differential->maxAngularVelocity            = d;
+                     robot->motionController->rampAng.vMax              = d;
+                 }
+            break;
+            case 333: // set max linear acceleration
+                if (hasD(command)){
+                     d = command->D;
+                     robot->motionController->rampLin.aMax = d;
+                 }
+            break;
+            case 334: // set max angular acceleration
+                if (hasD(command)){
+                     d = command->D;
+                     robot->motionController->rampAng.aMax = d;
+                 }
+            break;
+            case 335:
+                if (hasD(command)){
+                     d = command->D;
+                     robot->motionController->rampLin.aFrein = d;
+                 }
+            break;
+            case 336:
+                if (hasD(command)){
+                     d = command->D;
+                     robot->motionController->rampAng.aFrein = d;
                  }
             break;
             case 666:
@@ -94,6 +162,7 @@ void peekCommand(gcodeCommand_context* command, diffDriveRobot_Context* robot, U
                 else {
                     fastMove(robot, xc, yc);
                 }
+                robot->controlMode = 0;
                 break;
             case 1: // fast move
             	;
@@ -109,6 +178,17 @@ void peekCommand(gcodeCommand_context* command, diffDriveRobot_Context* robot, U
                 else {
                     linearMove(robot, xc, yc);
                 }
+                robot->controlMode = 0;
+                break;
+            case 10:
+                if (hasI(command)) robot->linearVelocity = command->I;
+                if (hasJ(command)) robot->angularVelocity = command->J;
+                robot->controlMode = 1;
+                break;
+            case 11:
+                if (hasI(command)) robot->vitG = command->I;
+                if (hasJ(command)) robot->vitD = command->J;
+                robot->controlMode = 2;
                 break;
             case 92:
             	;
@@ -190,6 +270,8 @@ void setPosition(diffDriveRobot_Context* robot, float x, float y, float theta){
     odometry_init(robot->odometry, x, y, theta);
 }
 
+
+// getter
 void printPosition(diffDriveRobot_Context* robot, UART_HandleTypeDef *huart){
     float x,y,theta;
     x = robot->odometry->position.x;
@@ -197,6 +279,24 @@ void printPosition(diffDriveRobot_Context* robot, UART_HandleTypeDef *huart){
     theta = robot->odometry->position.theta;
     char buffer[190];
     HAL_UART_Transmit(huart, (uint8_t*)buffer, sprintf(buffer,"X%f Y%f A%f\n", x, y, theta), 90000);//s/ @suppress("Float formatting support")
+}
+
+
+void printRspeed(diffDriveRobot_Context* robot, UART_HandleTypeDef *huart){
+    float consign, measure, command;
+    consign = robot->vitD;
+    measure = robot->mesureD;
+    command = robot->commandD;
+    char buffer[190];
+    HAL_UART_Transmit(huart, (uint8_t*)buffer, sprintf(buffer,"consign %f measure Y%f command A%f\n", consign, measure, command), 90000);//s/ @suppress("Float formatting support")
+}
+void printLspeed(diffDriveRobot_Context* robot, UART_HandleTypeDef *huart){
+    float consign, measure, command;
+    consign = robot->vitG;
+    measure = robot->mesureG;
+    command = robot->commandG;
+    char buffer[190];
+    HAL_UART_Transmit(huart, (uint8_t*)buffer, sprintf(buffer,"consign %f measure Y%f command A%f\n", consign, measure, command), 90000);//s/ @suppress("Float formatting support")
 }
 
 void printComTest(UART_HandleTypeDef *huart){
@@ -207,6 +307,9 @@ void printSelf(UART_HandleTypeDef *huart){
 	char buffer[190];
     HAL_UART_Transmit(huart, (uint8_t*)buffer, sprintf(buffer,"CmdBoard\n"), 90000);
 }
+
+
+
 
 void setPID_D(diffDriveRobot_Context* robot, float Kp, float Ti, float Td){
     robot->pidD->Kp = Kp;
@@ -235,7 +338,6 @@ void setOdomInnerDist(diffDriveRobot_Context* robot, float innerDist) {
 void setMotorInnerDist(diffDriveRobot_Context* robot, float innerDist) {
     robot->distBetweenMotorWheels = innerDist;
     robot->differential->distanceBetweenWheels = innerDist;
-
 }
 
 

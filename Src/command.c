@@ -278,7 +278,7 @@ void printPosition(diffDriveRobot_Context* robot, UART_HandleTypeDef *huart){
     y = robot->odometry->position.y;
     theta = robot->odometry->position.theta;
     char buffer[190];
-    HAL_UART_Transmit(huart, (uint8_t*)buffer, sprintf(buffer,"X%f Y%f A%f\n", x, y, theta), 90000);//s/ @suppress("Float formatting support")
+    HAL_UART_Transmit(huart, (uint8_t*)buffer, sprintf(buffer,"X %f Y %f A %f\n", x, y, theta), 90000);//s/ @suppress("Float formatting support")
 }
 
 

@@ -10,14 +10,18 @@ void odometry_init(odometry_Context *odometry, float x0, float y0, float theta0)
 }
 
 void odometry_update(odometry_Context *odometry){
+    // calcul des distances parcourues
     float distR =  odometry->wheelRadiusR * 2*PI/odometry->encoderRes * (float)(int16_t)*(odometry->rightTicks);
     float distL =  odometry->wheelRadiusL * 2*PI/odometry->encoderRes * (float)(int16_t)*(odometry->leftTicks);
+    // remise à zero du compte des encodeurs
     *(odometry->rightTicks) = 0;
 	*(odometry->leftTicks) = 0;
 
+    // cacul petit déplacements
     odometry->linearDisplacement = (distR + distL)/2;
     odometry->angularDisplacement = (distR - distL)/odometry->distanceBetweenWheels;
 
+    // calcul de la position avec integration par runge kuta2
     odometry->position.x = odometry->position.x + odometry->linearDisplacement*cos(odometry->position.theta + odometry->angularDisplacement/2);
     odometry->position.y = odometry->position.y + odometry->linearDisplacement*sin(odometry->position.theta + odometry->angularDisplacement/2);
     odometry->position.theta = odometry->position.theta + odometry->angularDisplacement;

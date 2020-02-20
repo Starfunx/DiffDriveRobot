@@ -691,7 +691,7 @@ void setup(){
     distBetweenMotorWheels = 180.;// mm
 
     differentiel.distanceBetweenWheels	= distBetweenMotorWheels;
-    differentiel.maxLinearVelocity	 	= 450.; // mm.s^-1
+    differentiel.maxLinearVelocity	 	= 500.; // mm.s^-1
     differentiel.maxAngularVelocity	 	= 5.55; // rad.s^-1
 
     motionController.Krho = 					0.6;
@@ -702,7 +702,7 @@ void setup(){
 
     motionController.rampLin.aFrein =           0.02;
     motionController.rampLin.aMax =             0.02;
-    motionController.rampLin.vMax =             450;
+    motionController.rampLin.vMax =             500;
     motionController.rampLin.lastPos =          0;
 
     motionController.rampAng.aFrein =           0.2;

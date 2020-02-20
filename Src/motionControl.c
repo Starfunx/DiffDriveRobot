@@ -46,8 +46,8 @@ void motionControl_update(motionControl_Context* motionController, _position rob
 }
 
 void motionControl_update0(motionControl_Context* motionController, float* linearVelocity, float* angularVelocity, float dt){
-    // *linearVelocity = motionController->Krho * motionController->rho * cos(motionController->alpha);
-    *linearVelocity = ramp_update(&motionController->rampLin, motionController->rho*cos(motionController->alpha), dt);
+    *linearVelocity = motionController->Krho * motionController->rho * cos(motionController->alpha);
+    // *linearVelocity = ramp_update(&motionController->rampLin, motionController->rho*cos(motionController->alpha), dt);
     *angularVelocity = motionController->Kalpha * sin(motionController->alpha);
     // *angularVelocity = ramp_update(&motionController->rampAng, motionController->alpha*sin(motionController->alpha), dt);
 
